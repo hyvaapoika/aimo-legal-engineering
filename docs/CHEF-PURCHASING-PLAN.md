@@ -1,6 +1,6 @@
 # Chef purchasing experience — planning draft
 
-Date: 14 November 2026. Status: proposal for discussion; no application behavior changed.
+Date: 14 November 2026. Status: historical planning proposal. The current product direction and build sequence are in [SMART-WEBSHOP-PLAN.md](SMART-WEBSHOP-PLAN.md), which supersedes the lunch-first experience described below. Retain this document for its research and trust-boundary notes.
 
 ## Objective and scope
 

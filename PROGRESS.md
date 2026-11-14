@@ -12,6 +12,12 @@
 
 Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
+## Smart webshop implementation plan — 14 November 2026
+
+- Recorded the user-requested full-catalogue, Valio-style webshop direction in `docs/SMART-WEBSHOP-PLAN.md`; it supersedes the lunch-first UI plan.
+- Plan covers all 17,546 records, richer catalogue normalization, keyword/semantic discovery, Gemini intent extraction, product comparisons, contextual alternatives, image resolution and scoped cart/agent integration. Milestones include measurable acceptance checks and fallback behavior.
+- Verified from supplied data: 13,375 products have media references but no image URLs/files; the supplied API has no media route. Image resolution and official category taxonomy remain external inputs. Provider documentation was reviewed; no new model calls, embeddings, extension migrations or UI implementation were exercised in this planning turn.
+
 ## Chef workspace design preview — 14 November 2026
 
 - Revised the homepage into a task-driven workspace: requests and task chips render central comparison cards, quantity proposals and savings proposals. Lunch ingredients use editable rows; catalogue cards remain under Add an ingredient / Shop products. The desktop side panel is the current basket.

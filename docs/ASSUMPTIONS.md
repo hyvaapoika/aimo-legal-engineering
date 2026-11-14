@@ -1,5 +1,7 @@
 # Implementation decisions and limits
 
+The current planned direction is the full-catalogue smart webshop described in [SMART-WEBSHOP-PLAN.md](SMART-WEBSHOP-PLAN.md). Hybrid search, model-based intent, catalogue-wide images and the new storefront-to-cart integration remain planned, not implemented. The prototype limitations below describe the app that currently runs.
+
 ## Chef interface preview — 14 November 2026
 
 - The root page is now a local chef design preview; the existing authenticated gateway dashboard is at `/operations`. Its approval/order/voice behavior is retained.
