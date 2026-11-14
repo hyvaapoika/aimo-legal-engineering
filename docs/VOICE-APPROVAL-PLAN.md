@@ -9,6 +9,7 @@ Status: researched, not implemented or call-tested. Existing voice support remai
 - The supplier gateway builds the quotation, calls the registered restaurant approver, answers questions, requests explicit confirmation, and creates the simulated order only after approval.
 - The dashboard shows actual progress through request, lookup, quotation, approval call, decision, and order creation.
 - Increase text size, reduce explanatory copy, replace the current editorial/serif appearance with a clear operational interface, and make the live flow the primary screen.
+- The user is in Finland, will receive calls on a personal Finnish number, has ElevenLabs but no Twilio account, and wants English with no PIN for this simulated demo. Restrict demo calling to the configured recipient; this mode does not establish production-grade approver identity.
 
 ## Recommended first integration
 
@@ -29,7 +30,7 @@ Use a model available in the ElevenLabs agent configuration for the initial spik
 1. Persist a quotation and proposal; require human approval through server-side policy, independent of order amount.
 2. Freeze a quotation revision containing item quantities, substitutions, delivery date, currency, tax treatment, total, and expiry. Persist a call attempt before invoking any provider.
 3. Dial only the registered demo approver. Pass quotation context and a short-lived capability restricted to this approval attempt; never expose the general admin token to the voice agent.
-4. Identify the assistant as an AI purchasing assistant. Verify the approver using the selected demo verification method. If a PIN is used, validate it on the server and do not include the expected PIN in the model context or logs.
+4. Identify the assistant as an AI purchasing assistant. For the explicitly selected simulated demo, use no PIN and restrict the call to the configured demo recipient. Bind approval to that call attempt and quotation. Production identity verification is outside this demo mode.
 5. Give the exact quotation summary and answer questions using read-only quotation data. Missing information stays unknown.
 6. Ask explicitly whether the person approves that quotation and amount. Use an authenticated server tool to record approval or rejection during the call. Post-call sentiment or a general conversation-success label is not authority to purchase.
 7. Verify the call/approval binding, unconsumed confirmation capability, quotation revision, pending state, expiry, mandate, and current feasibility. Commit the decision and simulated order transactionally. Duplicate delivery must return the same outcome, not create another order.
@@ -60,7 +61,15 @@ UI direction: 16–18px primary text; readable status labels; sans-serif heading
 3. One actual outbound phone call to the user's registered test number: rings, answers, two-way conversation, correct quotation context.
 4. Spoken approval: exactly one order, with confirmation returned during the call and UI updated from server state.
 5. Rejection and hangup: no order. Busy/no-answer: clear failure, no automatic repeated dialling.
-6. Trust tests: wrong PIN, expired/revised quotation, forged or duplicated provider requests, duplicate start clicks, and concurrent app/phone decisions.
+6. Trust tests: unconfigured recipient, expired/revised quotation, forged or duplicated provider requests, duplicate start clicks, and concurrent app/phone decisions.
 7. Full rehearsal: restaurant inventory trigger → catalogue → hosted Valio lookup → quotation → phone approval → simulated order, with visible progress throughout.
 
-Current local state: no ElevenLabs key/agent/phone-number ID or Twilio credentials are configured. No voice test has been performed. Country/account details and language/verification preferences were requested from the user. Twilio's current trial guide limits verified destinations and custom call behavior; do not assume a trial can run this integration. [Voice trial guide](https://www.twilio.com/docs/usage/trials/try-out-voice).
+Current local state: no ElevenLabs key/agent/phone-number ID or Twilio credentials are configured. No voice test has been performed. Twilio's current trial guide limits verified destinations and custom call behavior; do not assume a trial can run this integration. [Voice trial guide](https://www.twilio.com/docs/usage/trials/try-out-voice).
+
+## Finland setup findings
+
+Twilio currently documents a free 30-day trial without a credit card, including 75 voice minutes. Finland is in its supported trial-country list. Trial calls are restricted to verified recipients in the signup country, and custom Voice behavior has restrictions. Free signup does not establish that the ElevenLabs integration will work without upgrading. [Trial documentation](https://www.twilio.com/docs/usage/trials).
+
+The detailed Finnish Voice pricing table lists USD 0.044/min for Finnish mobile destinations from EEA or US/Canada origins, and USD 0.5172/min for the unqualified Finnish-mobile category. Number rental, ElevenLabs usage, optional features, and taxes are separate. Confirm the applicable caller/destination rate before purchasing. [Finland pricing](https://www.twilio.com/en-us/voice/pricing/fi).
+
+The user's personal Finnish number is the destination. Do not assume it is suitable as the outgoing caller ID: Twilio warns that international traffic presenting a domestic Finnish caller ID can be blocked and recommends an international number or a compliant Twilio Finnish number. [Finnish Voice guidelines](https://www.twilio.com/en-us/guidelines/fi/voice).
