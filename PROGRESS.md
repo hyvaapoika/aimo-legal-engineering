@@ -12,6 +12,13 @@
 
 Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
+## Chef workspace design preview — 14 November 2026
+
+- Built a new local homepage with a sample lunch, portion editing, product imagery, catalogue-selection search and category filters, contextual replacement cards, basket drawer, undo, saved lists, product details and draft export. The previous purchasing workspace remains at `/operations`.
+- Real catalogue identities and declarations are paired with clearly labelled sample prices, availability and recipe quantities. The assistant is a guided UI preview, not a live language-model connection. New drafts do not submit purchasing proposals.
+- Added regression coverage for whole-pack rounding, different pack sizes, integer money, dietary declaration preservation, manual quantity overrides, stable row order and safe local-storage restoration.
+- Verification: `pnpm check` passed with 101 tests and the isolated purchasing demo; `pnpm build` passed. Browser checks covered replacement selection, portion scaling, basket totals, undo, saved lunches, product search and quantity editing. The 390 × 844 mobile layout had no horizontal overflow; the assistant opens as a side sheet. Desktop screenshot: `.local/chef-workspace-desktop.png` (ignored local artifact). Live AI and proposal submission are not connected to this preview.
+
 ## Verified on 14 November 2026
 
 - `pnpm check`: strict TypeScript checks, **69 passing behavioral tests**, and the isolated end-to-end demo.

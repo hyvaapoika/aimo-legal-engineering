@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "Aimo | Agent Gateway",
+  title: "Aimo | Your kitchen, ready",
   description:
-    "Purchasing authority, made visible. A Junction 2026 commerce gateway.",
+    "Plan your lunch, find the right ingredients, and shop with Aimo. Junction 2026 design preview.",
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,0 +1,43 @@
+[
+  {
+    "key": "cream",
+    "page": "https://www.valioaimo.fi/ammattilaistuotteet/valio-ruokakerma-15-laktoositon-uht/",
+    "asset": "https://cdn-wp.valio.fi/valio-wp-network/sites/2/2026/07/valio-ruokakerma-15-laktoositon-uht-1495-800x800.png",
+    "file": "cream.png",
+    "bytes": 55991
+  },
+  {
+    "key": "cheese",
+    "page": "https://www.valioaimo.fi/ammattilaistuotteet/valio-mozzarella-juustomuru/",
+    "asset": "https://cdn-wp.valio.fi/valio-wp-network/sites/2/2026/06/valio-mozzarella-juustomuru-34066-800x800.png",
+    "file": "cheese.png",
+    "bytes": 227853
+  },
+  {
+    "key": "lunch-inspiration",
+    "page": "https://www.talabat.com/uae/restaurant/2626/800pizza-dubai-motor-city?aid=1276",
+    "asset": "https://images.deliveryhero.io/image/menu-import-gateway-prd/regions/ME/chains/TLBT%20Kitopi%20Plugin-New/5439a241c27f67e9a90b0e6780c619f7.jpeg",
+    "file": "lunch.jpg",
+    "usage": "Serving inspiration only; not a verified image of the sample recipe."
+  },
+  {
+    "key": "pasta",
+    "page": "https://www.minimani.fi/barilla-penne-rigate-500-g-7.html",
+    "asset": "https://www.minimani.fi/media/catalog/product/cache/207e23213cf636ccdef205098cf3c8a3/9/a/9adb718e19f35b171a4c7f2f2d505b6e0dff3504_8076802085738.jpg",
+    "file": "pasta.jpg",
+    "usage": "Individual 500g pack inside supplied 12-pack case; GTIN 8076802085738."
+  },
+  {
+    "key": "butter",
+    "page": "https://www.valio.fi/tuotteet/valio-voi-normaalisuolainen/",
+    "asset": "https://cdn.valio.fi/mediafiles/36d56474-64e1-4893-82b9-ff7c5b700b24/800x800-product/800x800/valio-voi-normaalisuolainen-500-g.png",
+    "file": "butter.png"
+  },
+  {
+    "key": "tomatoes",
+    "page": "https://www.italia-import.de/mutti-polpa-2500g-feinstes-tomatenfruchtfleisch",
+    "asset": "https://www.italia-import.de/media/catalog/product/cache/f00f3de43a473918b8ac35712dac6e21/0/6/06_pesto-mutti-polpa-2500g-webshop-italia-import.png",
+    "file": "tomatoes.png",
+    "usage": "Mutti Polpa 2500g packaging image; sample prices are unrelated to this source."
+  }
+]

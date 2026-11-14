@@ -1,5 +1,14 @@
 # Implementation decisions and limits
 
+## Chef interface preview — 14 November 2026
+
+- The root page is now a local chef design preview; the existing authenticated gateway dashboard is at `/operations`. Its approval/order/voice behavior is retained.
+- The chef screen uses ten real product identities and supplier claims extracted from the supplied catalogue. Prices, availability (including one deliberate stock-out), and recipe quantities are explicit UI fixtures, not supplier offers or a reviewed recipe. It uses no production inventory, payment, or order endpoint.
+- Search is over that ten-product selection. The contextual assistant uses deterministic preview commands and buttons, explicitly labelled “Guided preview · no live AI”. No Gemini request or new agent integration is claimed. Dietary group allocation is not implemented; product-level declarations do not certify an entire meal.
+- Portions, legal whole-pack quantities, price differences and draft totals use TypeScript; data is saved only in this browser's local storage. Draft export is JSON with `status: design-preview-not-an-order`. The preview is not yet connected to proposal creation. Opening Operations does not transfer the draft.
+- Product photos are downloaded from public product pages where the identity/pack can be matched; provenance is in `apps/web/public/kitchen/sources.json`. The Barilla photo depicts one 500 g pack inside the stated 12-pack sales case. Missing photographs use labelled placeholders. The lunch photo is labelled serving inspiration, not an image of a verified recipe.
+- Browser preference for a delivery horizon does not query or promise delivery. A future live flow must obtain signed prices/availability and perform all existing approval checks before commitment.
+
 The supplied plan is preserved unchanged in `docs/PLAN.md`. It contains an aspirational weekend scope and embedded coding instructions. The implementation below follows the purchasing and control requirements while explicitly documenting simpler infrastructure choices and permitted cuts.
 
 ## Data and money
