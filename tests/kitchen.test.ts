@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   makeLunch,
+  productById,
   packCount,
   replaceProduct,
   restoreDraft,
@@ -74,5 +75,61 @@ describe("chef design preview draft boundaries", () => {
     expect(restoreDraft(d)).toEqual(d);
     expect(() => makeLunch(0)).toThrow();
     expect(() => makeLunch(120.5)).toThrow();
+  });
+});
+
+import {
+  applyProposal,
+  proposePortions,
+  proposeSavings,
+} from "../apps/web/app/kitchen/proposals";
+
+describe("interactive workspace proposals", () => {
+  it("shows scaling without changing the current basket until explicitly applied", () => {
+    const current = makeLunch(120);
+    const original = structuredClone(current);
+    const proposal = proposePortions(current, 150);
+    expect(current).toEqual(original);
+    expect(proposal.next.portions).toBe(150);
+    expect(proposal.next.lines.find((l) => l.productId === "464249")?.qty).toBe(
+      5,
+    );
+    expect(applyProposal(current, proposal)).toEqual(proposal.next);
+  });
+  it("rejects applying a proposal after quantities or portions have changed", () => {
+    const current = makeLunch(120);
+    const proposal = proposeSavings(current);
+    expect(() =>
+      applyProposal(setQuantity(current, "464249", 6), proposal),
+    ).toThrow("basket changed");
+    expect(() => applyProposal(makeLunch(150), proposal)).toThrow(
+      "basket changed",
+    );
+  });
+  it("reduces actual line costs with enough whole packs and preserves the original", () => {
+    const current = makeLunch(120);
+    const proposal = proposeSavings(current);
+    expect(current.lines[1]?.productId).toBe("465046");
+    expect(totalCents(proposal.next)).toBeLessThan(totalCents(current));
+    expect(proposal.next.lines.find((l) => l.productId === "463947")?.qty).toBe(
+      6,
+    );
+    expect(proposal.next.lines).toHaveLength(current.lines.length);
+    for (let i = 0; i < proposal.next.lines.length; i++) {
+      const before = current.lines[i]!,
+        after = proposal.next.lines[i]!;
+      if (before.productId !== after.productId) {
+        const p = productById(after.productId)!;
+        expect(p.unavailable).toBe(false);
+        expect(p.priceCents * after.qty).toBeLessThan(
+          productById(before.productId)!.priceCents * before.qty,
+        );
+      }
+    }
+  });
+  it("never removes a declared gluten-free property to find savings", () => {
+    const current = replaceProduct(makeLunch(120), "475437", "462324");
+    const next = proposeSavings(current).next;
+    expect(next.lines.some((l) => l.productId === "462324")).toBe(true);
   });
 });
