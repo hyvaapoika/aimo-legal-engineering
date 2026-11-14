@@ -1,0 +1,38 @@
+{
+  "version": "0.1.0",
+  "name": "Aimo Agent Gateway",
+  "services": {
+    "commerce": {
+      "capabilities": [
+        "catalog",
+        "offers",
+        "proposals",
+        "orders"
+      ]
+    }
+  },
+  "transports": {
+    "mcp": "http://localhost:4000/mcp",
+    "rest": "http://localhost:4000/v1",
+    "openapi": "http://localhost:4000/openapi.json"
+  },
+  "signing_keys": "http://localhost:4000/.well-known/jwks.json",
+  "auth": {
+    "scheme": "http-message-signatures",
+    "alg": "ed25519",
+    "coveredComponents": [
+      "@method",
+      "@target-uri",
+      "content-digest"
+    ],
+    "bearerFallback": "Deployment controlled; see ALLOW_BEARER",
+    "registration": "http://localhost:4000/admin/agents"
+  },
+  "policies": {
+    "humanApproval": true,
+    "fixedPrices": true,
+    "orderPlacement": "simulated",
+    "missingAllergens": "unknown"
+  },
+  "terms": "Junction 2026 demonstration. Not a production commerce endpoint."
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "aimo": {
+      "command": "node",
+      "args": [
+        "<absolute-repository-path>/node_modules/tsx/dist/cli.mjs",
+        "<absolute-repository-path>/apps/buyer-agent/src/mcp-bridge.ts"
+      ]
+    }
+  }
+}

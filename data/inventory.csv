@@ -1,0 +1,5 @@
+productId,hint,onHand,weeklyUsage,target,unit,requiredClaim
+464201,lactose-free milk,120,400,1120,L,FREE_FROM_LACTOSE
+476824,natural yoghurt,20,80,220,KG,FREE_FROM_LACTOSE
+475797,salted butter,10,20,70,KG,
+461885,salmon fillet,25,50,175,KG,

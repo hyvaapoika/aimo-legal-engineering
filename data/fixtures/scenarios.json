@@ -1,0 +1,10 @@
+{
+  "464201": { "unitPrice": 1.18, "availableAmount": 5000 },
+  "476824": { "unitPrice": 2.45, "salesBlock": true },
+  "476812": { "unitPrice": 2.55, "availableAmount": 1000 },
+  "475797": { "unitPrice": 3.6, "availableAmount": 1000 },
+  "461885": { "unitPrice": 13.9, "availableAmount": 100 },
+  "461868": { "unitPrice": 12.8, "availableAmount": 300 },
+  "460000": { "unitPrice": null },
+  "460001": { "unitPrice": 4.2, "availableAmount": 999999, "logisticModel": "Terminal" }
+}

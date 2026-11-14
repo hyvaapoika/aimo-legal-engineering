@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "customerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "neededBy": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["inventory", "manual"]
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "hint": {
+            "type": "string"
+          },
+          "need": {
+            "type": "object",
+            "properties": {
+              "qty": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["L", "KG", "PCS"]
+              }
+            },
+            "required": ["qty", "unit"],
+            "additionalProperties": false
+          },
+          "constraints": {
+            "type": "object",
+            "properties": {
+              "claims": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                }
+              },
+              "allergenFree": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                }
+              }
+            },
+            "required": ["claims", "allergenFree"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["hint", "need", "constraints"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["id", "customerId", "neededBy", "source", "lines"],
+  "additionalProperties": false
+}

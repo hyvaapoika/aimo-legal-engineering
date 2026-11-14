@@ -1,0 +1,49 @@
+# Implementation decisions and limits
+
+The supplied plan is preserved unchanged in `docs/PLAN.md`. It contains an aspirational weekend scope and embedded coding instructions. The implementation below follows the purchasing and control requirements while explicitly documenting simpler infrastructure choices and permitted cuts.
+
+## Data and money
+
+- All 17,546 supplied product records are available locally. Original JSON, its schema, carbon CSV, reliability CSV, and the pasted upstream OpenAPI are preserved. They are not redownloaded at startup.
+- Mock prices and availability are synthetic and labelled `source: mock`. They are not captured Valio responses. Named scenario fixtures are in `data/fixtures/scenarios.json`; other products receive a deterministic synthetic fallback price in mock mode only. Live mode never falls back to mock.
+- `469363` is milk and `469380` is coconut milk. The plan incorrectly calls these yoghurt. The demo uses yoghurt `476824` (blocked) and `476812` (substitute), butter `475797`, fish `461885` (short) and `461868` (substitute), and milk `464201`.
+- Manufacturer base-unit volume/net weight is preferred; KG base units represent one kilogram even when a physical fish box weighs ten kilograms. Conservative name parsing is explicitly marked inferred. Multipacks and variable-weight names without a verified conversion remain unknown.
+- One supplied pack conversion has a zero factor. It is excluded; no division by zero or invented sales-pack factor is allowed. A product’s own base unit has factor one by definition.
+- Supplier generic `0.01` lot sizes do not authorize fractional packaged pieces. Conversion rounds requirements up to whole pieces and to the supplier lot. The API also rejects fractional-piece proposals independently.
+- All money is EUR. Decimal arithmetic computes each line; half-up rounding to integer cents happens once per line. The server computes totals from stored, verified offers. Buyer-provided totals and customer identity fields are rejected.
+- Supplier offsetless timestamps use Europe/Helsinki, including daylight saving. Date-only price expiry includes the full Helsinki day. Requested delivery dates must match the signed offers.
+- Required dietary/allergen claims need positive declarations. Lactose-free is not milk-allergen-free. Empty declarations remain unknown. Strict substitutions also preserve the original product’s positive free-from declarations.
+- Reliability and carbon are comparison signals, not promises. Missing signals are absent. No approximate order-level carbon total is presented; the plan’s dairy-density estimate is therefore not used.
+- Category display uses supplied codes because names are absent. Search is deterministic Finnish/English substring/token ranking, with a documented milk-category preference. PostgreSQL full-text ingestion is provided, but serving search uses the normalized in-memory catalog. No embedding model or pgvector search is required or enabled.
+
+## Authority and approvals
+
+- Orders are always simulated because the supplied API has no order endpoint. There is no payment, ERP submission, stock reservation, or supplier confirmation.
+- AUTO is possible only after all code checks pass. A HOLD requires an authenticated registered approver. REFUSE is never overridden. A human may override spending/category/site/substitution/anomaly policy holds, but not unknown stock, unavailable stock, late delivery, or hard refusals. Supplier feasibility must be resolved first.
+- Partial automatic placement is deliberately disabled. A global order/week limit applies to the whole proposal, so splitting cannot bypass it. The demo illustrates AUTO and HOLD using separate proposals.
+- Amending quantities creates a linked replacement proposal and evaluates all rules again. A new HOLD returns to the human; a valid AUTO can place after the human’s explicit amendment. The old approval resolves as amended. Callback leaves the decision pending.
+- Approvals are bound to a hash of immutable lines, a challenge token, and a revision. First decision wins. Approval and order placement are atomic. Existing prices, signatures, agent activity, mandate, and current spending are checked again at approval time.
+- The local workspace has one customer (`hotel-haven`) and one human administrator/approver (`maija`). This is an explicitly configured demo identity, not SSO. Agents are separate principals with customer binding and scoped permissions. The schema supports multiple customers; the human UI is intentionally single-workspace.
+- `ALLOW_BEARER` is an interoperability fallback for clients without request signing. Admin and agent credentials are separate. Default demo tokens are accepted only for local mock development. The development gateway binds to loopback.
+- Provider keys never appear in the browser. Browser sessions are HMAC-authenticated, HttpOnly, SameSite Strict, expire after eight hours, and become invalid when the admin token rotates. Mutations require a matching Origin.
+
+## Persistence and operations
+
+- PGlite provides embedded PostgreSQL persistence for a zero-service demo. External PostgreSQL uses `pg`. A small parameterized SQL repository replaces Drizzle. Versioned mandates, signed offers, proposals, verdicts, approvals, orders, nonces, and ledger records are persisted in transactional JSONB tables with uniqueness constraints.
+- Business transitions serialize to protect rolling limits and prevent duplicate orders. External PostgreSQL also uses an advisory lock. This is appropriate for a demo, not a high-throughput deployment design.
+- A persistent approval-routing state and timer replace pg-boss. Restarting retains pending approval/expiry state. App inbox is always available. Unsupported voice/SMS attempts are recorded as disabled and fall back to the app; they are never reported as delivered.
+- Voice and SMS are **not implemented as live provider integrations** in this build. `VOICE_ENABLED=false` follows the original plan’s explicit skip path. Setting it true fails clearly rather than pretending to make calls. No PIN, transcript, recording, Twilio webhook, or real call is claimed. ElevenLabs is not required.
+- The optional Claude Agent SDK client and Gemini structured advisory reviewer are implemented and typechecked. They were not run against paid APIs because no keys were supplied. Gemini has no authority or tools; its output cannot alter quantities, prices, permissions, or verdicts.
+- Business actions and agent reads produce audit events. Passive human dashboard polling and health checks deliberately do not create a new event every few seconds. The single global chain verifies all events; a customer-filtered export is a projection, not an independently verifiable full chain.
+- Hash chaining detects altered rows or internal deletion. It does not defeat a database administrator who can rewrite the whole chain, or detect removal of the tail without a previously trusted head hash. Production needs external anchoring and database write-role restrictions.
+- Offer validity is min(price expiry, cut-off, issue time + 30 minutes). Supplier price intervals are checked against the requested delivery date. Unpriced products remain unpriced.
+
+## Interoperability and external verification
+
+- The SDK integration test initializes a real Streamable HTTP MCP client and completes search, offers, proposal, and order retrieval. The stdio bridge makes the same tools available to local desktop clients. A real Claude Desktop connection and public HTTPS deployment have not been tested.
+- Discovery is UCP-shaped, and the agent card describes the interface. The server does not implement an A2A task-execution endpoint or claim UCP/A2A protocol certification.
+- JWS uses Ed25519. HTTP signing implements a restricted RFC 9421 profile with fixed covered components; arbitrary component lists and signature labels are unsupported. The full target URI is signed, protecting host and query parameters. Proxies must preserve the external request URI.
+- XML export uses the UBL Order 2.1 envelope and Peppol Ordering identifiers. It escapes data and is checked for well-formed XML. Placeholder GLNs, supplier unit mapping, and customer legal data prevent real Peppol transmission. It has **not** passed a complete Peppol Schematron/UBL conformance suite; do not call it certified or production-valid.
+- A disposable local PostgreSQL 16 instance passed the end-to-end and concurrent-approval checks. Live Valio responses, hosted PostgreSQL operation, Docker image deployment, paid model calls, real customer SSO, voice/SMS, and public hosting still need separate environment-backed verification. The local automated checks do not claim those outcomes.
+
+Standards consulted: [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk/tree/v1.x), [PGlite persistence and transactions](https://pglite.dev/docs/api), [Peppol Ordering identifiers](https://docs.peppol.eu/poacc/upgrade-3/profiles/28-ordering/), and the locally installed Next.js route-handler documentation. The upstream request contract comes from the user-supplied OpenAPI file.

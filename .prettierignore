@@ -1,0 +1,7 @@
+data/
+docs/PLAN.md
+docs/valio-openapi.json
+pnpm-lock.yaml
+**/.next/**
+**/.next-dev/**
+.local/

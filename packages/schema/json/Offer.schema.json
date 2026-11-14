@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "customerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "productId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "product": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "names": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "brand": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "salesUnit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "baseUnit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "gtin": {
+          "type": "string"
+        },
+        "packs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "unitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "sizeInBaseUnits": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              "gtin": {
+                "type": "string"
+              }
+            },
+            "required": ["unitId", "sizeInBaseUnits"],
+            "additionalProperties": false
+          }
+        },
+        "allowedLotSize": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000000
+        },
+        "netContent": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000
+            },
+            "unit": {
+              "type": "string",
+              "enum": ["L", "KG", "PCS"]
+            },
+            "inferred": {
+              "type": "boolean"
+            }
+          },
+          "required": ["value", "unit", "inferred"],
+          "additionalProperties": false
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allergenFree": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allergens": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "substitutions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "temperatureCondition": {
+          "type": "number"
+        },
+        "reliability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "carbonKgPerKg": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "names",
+        "brand",
+        "category",
+        "salesUnit",
+        "baseUnit",
+        "packs",
+        "allowedLotSize",
+        "claims",
+        "allergenFree",
+        "allergens",
+        "substitutions"
+      ],
+      "additionalProperties": false
+    },
+    "requestedDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "validUntil": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["mock", "valio"]
+    },
+    "price": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0
+            },
+            "currency": {
+              "type": "string",
+              "const": "EUR"
+            },
+            "validFrom": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "validTo": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "netPriceFound": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "currency",
+            "validFrom",
+            "validTo",
+            "netPriceFound"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "comparisonPrice": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "type": "string"
+        }
+      },
+      "required": ["value", "unit"],
+      "additionalProperties": false
+    },
+    "salesBlock": {
+      "type": "boolean"
+    },
+    "closingTime": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "logisticModel": {
+      "type": ["string", "null"]
+    },
+    "availability": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "availableAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "availableDate": {
+            "type": ["string", "null"]
+          },
+          "salesUnit": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "salesBlock": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "availableAmount",
+          "availableDate",
+          "salesUnit",
+          "salesBlock"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "signature": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "customerId",
+    "productId",
+    "product",
+    "requestedDate",
+    "issuedAt",
+    "validUntil",
+    "source",
+    "price",
+    "salesBlock",
+    "closingTime",
+    "logisticModel",
+    "availability",
+    "signature"
+  ],
+  "additionalProperties": false
+}

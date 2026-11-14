@@ -1,0 +1,2265 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Aimo Agent Gateway",
+    "version": "0.1.0",
+    "description": "Agent-native commerce with deterministic policy and simulated order placement. Valio X-API-Key is server-side only."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000"
+    }
+  ],
+  "paths": {
+    "/v1/catalog/search": {
+      "get": {
+        "summary": "Search the supplied catalog",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "claims",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated positive claim codes"
+          },
+          {
+            "name": "allergenFree",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/offers": {
+      "post": {
+        "summary": "Get signed fixed-price offers",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "productIds": {
+                    "minItems": 1,
+                    "maxItems": 1000,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    }
+                  },
+                  "requestedDate": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "includeSubstitutesFor": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    }
+                  }
+                },
+                "required": [
+                  "productIds",
+                  "requestedDate",
+                  "includeSubstitutesFor"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        }
+      }
+    },
+    "/v1/proposals": {
+      "post": {
+        "summary": "Submit an idempotent proposal",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "requestedDate": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "deliverySite": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "lines": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "productId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "qty": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 1000000
+                        },
+                        "salesUnit": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "offerId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "substituteFor": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "rationale": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "requiredClaims": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          }
+                        },
+                        "allergenFree": {
+                          "default": [],
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          }
+                        }
+                      },
+                      "required": [
+                        "productId",
+                        "qty",
+                        "salesUnit",
+                        "offerId",
+                        "requiredClaims",
+                        "allergenFree"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "requirementRef": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "requestedDate",
+                  "deliverySite",
+                  "lines",
+                  "idempotencyKey"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        }
+      }
+    },
+    "/v1/proposals/{id}": {
+      "get": {
+        "summary": "Get proposal",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/orders/{id}": {
+      "get": {
+        "summary": "Get order",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/approvals/{id}/decide": {
+      "post": {
+        "summary": "Registered human approval",
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "approve",
+                      "approve_with_amount",
+                      "reject",
+                      "callback"
+                    ]
+                  },
+                  "challengeToken": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "amendedLines": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "productId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "qty": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 1000000
+                        }
+                      },
+                      "required": [
+                        "productId",
+                        "qty"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "decision",
+                  "challengeToken",
+                  "revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/agents/{id}": {
+      "patch": {
+        "summary": "Update agent mandate or status",
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "mandate": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "limits": {
+                        "type": "object",
+                        "properties": {
+                          "perOrder": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10000000
+                          },
+                          "perWeek": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10000000
+                          },
+                          "currency": {
+                            "type": "string",
+                            "const": "EUR"
+                          }
+                        },
+                        "required": [
+                          "perOrder",
+                          "perWeek",
+                          "currency"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "categories": {
+                        "maxItems": 1000,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        }
+                      },
+                      "deliverySites": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        }
+                      },
+                      "substitutionPolicy": {
+                        "type": "string",
+                        "enum": [
+                          "explicit",
+                          "category",
+                          "none"
+                        ]
+                      },
+                      "allergenProfile": {
+                        "type": "string",
+                        "enum": [
+                          "strict",
+                          "standard"
+                        ]
+                      },
+                      "requiredClaims": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        }
+                      },
+                      "allergenFree": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        }
+                      },
+                      "acceptCatalogPrice": {
+                        "type": "boolean"
+                      },
+                      "approvers": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "userId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "channels": {
+                              "minItems": 1,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "app",
+                                  "sms",
+                                  "voice"
+                                ]
+                              }
+                            },
+                            "phone": {
+                              "type": "string",
+                              "pattern": "^\\+[1-9]\\d{7,14}$"
+                            },
+                            "quietHours": {
+                              "type": "object",
+                              "properties": {
+                                "start": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 23
+                                },
+                                "end": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 23
+                                }
+                              },
+                              "required": [
+                                "start",
+                                "end"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "userId",
+                            "name",
+                            "channels"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "validTo": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "limits",
+                      "categories",
+                      "deliverySites",
+                      "substitutionPolicy",
+                      "allergenProfile",
+                      "requiredClaims",
+                      "allergenFree",
+                      "acceptCatalogPrice",
+                      "approvers",
+                      "validTo"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AgentBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "AdminBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Separate human/admin credential; buyer credentials never authorize approvals."
+      },
+      "HttpSignature": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Signature",
+        "description": "RFC 9421 Ed25519 profile; Signature-Input and Content-Digest also required."
+      }
+    },
+    "schemas": {
+      "Product": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "names": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "brand": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "salesUnit": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "baseUnit": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gtin": {
+            "type": "string"
+          },
+          "packs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "unitId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "sizeInBaseUnits": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 1000000
+                },
+                "gtin": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "unitId",
+                "sizeInBaseUnits"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "allowedLotSize": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000
+          },
+          "netContent": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "L",
+                  "KG",
+                  "PCS"
+                ]
+              },
+              "inferred": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "value",
+              "unit",
+              "inferred"
+            ],
+            "additionalProperties": false
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allergenFree": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "substitutions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "temperatureCondition": {
+            "type": "number"
+          },
+          "reliability": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "carbonKgPerKg": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "names",
+          "brand",
+          "category",
+          "salesUnit",
+          "baseUnit",
+          "packs",
+          "allowedLotSize",
+          "claims",
+          "allergenFree",
+          "allergens",
+          "substitutions"
+        ],
+        "additionalProperties": false
+      },
+      "Requirement": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "neededBy": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "inventory",
+              "manual"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hint": {
+                  "type": "string"
+                },
+                "need": {
+                  "type": "object",
+                  "properties": {
+                    "qty": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "maximum": 1000000
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": [
+                        "L",
+                        "KG",
+                        "PCS"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "qty",
+                    "unit"
+                  ],
+                  "additionalProperties": false
+                },
+                "constraints": {
+                  "type": "object",
+                  "properties": {
+                    "claims": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "allergenFree": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    }
+                  },
+                  "required": [
+                    "claims",
+                    "allergenFree"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "hint",
+                "need",
+                "constraints"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "customerId",
+          "neededBy",
+          "source",
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "Offer": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "productId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "names": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "brand": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "salesUnit": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "baseUnit": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "gtin": {
+                "type": "string"
+              },
+              "packs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "unitId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "sizeInBaseUnits": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "maximum": 1000000
+                    },
+                    "gtin": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "unitId",
+                    "sizeInBaseUnits"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "allowedLotSize": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              "netContent": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000
+                  },
+                  "unit": {
+                    "type": "string",
+                    "enum": [
+                      "L",
+                      "KG",
+                      "PCS"
+                    ]
+                  },
+                  "inferred": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "value",
+                  "unit",
+                  "inferred"
+                ],
+                "additionalProperties": false
+              },
+              "claims": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allergenFree": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allergens": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "substitutions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                }
+              },
+              "temperatureCondition": {
+                "type": "number"
+              },
+              "reliability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "carbonKgPerKg": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "id",
+              "names",
+              "brand",
+              "category",
+              "salesUnit",
+              "baseUnit",
+              "packs",
+              "allowedLotSize",
+              "claims",
+              "allergenFree",
+              "allergens",
+              "substitutions"
+            ],
+            "additionalProperties": false
+          },
+          "requestedDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "mock",
+              "valio"
+            ]
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "currency": {
+                    "type": "string",
+                    "const": "EUR"
+                  },
+                  "validFrom": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "validTo": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "netPriceFound": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "value",
+                  "currency",
+                  "validFrom",
+                  "validTo",
+                  "netPriceFound"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comparisonPrice": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "unit": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "value",
+              "unit"
+            ],
+            "additionalProperties": false
+          },
+          "salesBlock": {
+            "type": "boolean"
+          },
+          "closingTime": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "logisticModel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "availability": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "availableAmount": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "availableDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "salesUnit": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "salesBlock": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "availableAmount",
+                "availableDate",
+                "salesUnit",
+                "salesBlock"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "signature": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "customerId",
+          "productId",
+          "product",
+          "requestedDate",
+          "issuedAt",
+          "validUntil",
+          "source",
+          "price",
+          "salesBlock",
+          "closingTime",
+          "logisticModel",
+          "availability",
+          "signature"
+        ],
+        "additionalProperties": false
+      },
+      "Proposal": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "requestedDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "deliverySite": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "lines": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "qty": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 1000000
+                },
+                "salesUnit": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "offerId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "substituteFor": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "rationale": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "requiredClaims": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "allergenFree": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                }
+              },
+              "required": [
+                "productId",
+                "qty",
+                "salesUnit",
+                "offerId",
+                "requiredClaims",
+                "allergenFree"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "requirementRef": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "agentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "totalCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "held",
+              "refused",
+              "placed",
+              "rejected",
+              "expired",
+              "amended"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "verdict": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "proposalId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "result": {
+                "type": "string",
+                "enum": [
+                  "AUTO",
+                  "HOLD",
+                  "REFUSE"
+                ]
+              },
+              "firedRules": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "HOLD",
+                        "REFUSE"
+                      ]
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "productId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "observed": {},
+                    "limit": {}
+                  },
+                  "required": [
+                    "id",
+                    "severity",
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "perLine": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "productId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "result": {
+                      "type": "string",
+                      "enum": [
+                        "AUTO",
+                        "HOLD",
+                        "REFUSE"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "productId",
+                    "result"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "evaluatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": [
+              "id",
+              "proposalId",
+              "result",
+              "firedRules",
+              "perLine",
+              "evaluatedAt"
+            ],
+            "additionalProperties": false
+          },
+          "approvalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "orderId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "parentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "requestedDate",
+          "deliverySite",
+          "lines",
+          "idempotencyKey",
+          "id",
+          "agentId",
+          "customerId",
+          "totalCents",
+          "status",
+          "createdAt",
+          "verdict",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "Mandate": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "perOrder": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10000000
+              },
+              "perWeek": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10000000
+              },
+              "currency": {
+                "type": "string",
+                "const": "EUR"
+              }
+            },
+            "required": [
+              "perOrder",
+              "perWeek",
+              "currency"
+            ],
+            "additionalProperties": false
+          },
+          "categories": {
+            "maxItems": 1000,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "deliverySites": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "substitutionPolicy": {
+            "type": "string",
+            "enum": [
+              "explicit",
+              "category",
+              "none"
+            ]
+          },
+          "allergenProfile": {
+            "type": "string",
+            "enum": [
+              "strict",
+              "standard"
+            ]
+          },
+          "requiredClaims": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "allergenFree": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "acceptCatalogPrice": {
+            "type": "boolean"
+          },
+          "approvers": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "channels": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "app",
+                      "sms",
+                      "voice"
+                    ]
+                  }
+                },
+                "phone": {
+                  "type": "string",
+                  "pattern": "^\\+[1-9]\\d{7,14}$"
+                },
+                "quietHours": {
+                  "type": "object",
+                  "properties": {
+                    "start": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 23
+                    },
+                    "end": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 23
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "userId",
+                "name",
+                "channels"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "version",
+          "limits",
+          "categories",
+          "deliverySites",
+          "substitutionPolicy",
+          "allergenProfile",
+          "requiredClaims",
+          "allergenFree",
+          "acceptCatalogPrice",
+          "approvers",
+          "validTo"
+        ],
+        "additionalProperties": false
+      },
+      "Verdict": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "proposalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "HOLD",
+              "REFUSE"
+            ]
+          },
+          "firedRules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "HOLD",
+                    "REFUSE"
+                  ]
+                },
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "observed": {},
+                "limit": {}
+              },
+              "required": [
+                "id",
+                "severity",
+                "code",
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "perLine": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "result": {
+                  "type": "string",
+                  "enum": [
+                    "AUTO",
+                    "HOLD",
+                    "REFUSE"
+                  ]
+                }
+              },
+              "required": [
+                "productId",
+                "result"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "id",
+          "proposalId",
+          "result",
+          "firedRules",
+          "perLine",
+          "evaluatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "Approval": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "proposalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "amended",
+              "expired"
+            ]
+          },
+          "challengeToken": {
+            "type": "string"
+          },
+          "lineHash": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "channelIndex": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "channel": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "outcome": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "channel",
+                "at",
+                "outcome"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "approverId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "app",
+              "sms",
+              "voice"
+            ]
+          },
+          "signature": {
+            "type": "string"
+          },
+          "replacementProposalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "id",
+          "proposalId",
+          "customerId",
+          "status",
+          "challengeToken",
+          "lineHash",
+          "createdAt",
+          "expiresAt",
+          "nextAttemptAt",
+          "channelIndex",
+          "attempts"
+        ],
+        "additionalProperties": false
+      },
+      "Order": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "proposalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "verdictId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "approvalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "agentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "qty": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 1000000
+                },
+                "salesUnit": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "offerId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "substituteFor": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "rationale": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "requiredClaims": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "allergenFree": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "name": {
+                  "type": "string"
+                },
+                "gtin": {
+                  "type": "string"
+                },
+                "unitPrice": {
+                  "type": "number"
+                },
+                "lineTotalCents": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "deliveryDate": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                }
+              },
+              "required": [
+                "productId",
+                "qty",
+                "salesUnit",
+                "offerId",
+                "requiredClaims",
+                "allergenFree",
+                "name",
+                "unitPrice",
+                "lineTotalCents",
+                "deliveryDate"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "totalCents": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "currency": {
+            "type": "string",
+            "const": "EUR"
+          },
+          "deliveryDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "deliverySite": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "simulated": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "proposalId",
+          "verdictId",
+          "customerId",
+          "agentId",
+          "lines",
+          "totalCents",
+          "currency",
+          "deliveryDate",
+          "deliverySite",
+          "confirmedAt",
+          "simulated"
+        ],
+        "additionalProperties": false
+      },
+      "LedgerEvent": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "type": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "agent",
+                  "aimo",
+                  "human"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "refs": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "payload": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "prevHash": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "ts",
+          "type",
+          "actor",
+          "customerId",
+          "refs",
+          "payload",
+          "prevHash",
+          "hash"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

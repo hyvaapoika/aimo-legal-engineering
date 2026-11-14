@@ -1,0 +1,6 @@
+# Preserve the supplied datasets byte-for-byte, including CSV CRLF endings.
+data/products.json -diff -text -whitespace
+data/product-schema.json -text -whitespace
+data/carbon_footprint.csv -text -whitespace
+data/delivery_reliability.csv -text -whitespace
+docs/PLAN.md -whitespace

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "names": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "brand": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "salesUnit": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "baseUnit": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "gtin": {
+      "type": "string"
+    },
+    "packs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "unitId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "sizeInBaseUnits": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000000
+          },
+          "gtin": {
+            "type": "string"
+          }
+        },
+        "required": ["unitId", "sizeInBaseUnits"],
+        "additionalProperties": false
+      }
+    },
+    "allowedLotSize": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1000000
+    },
+    "netContent": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000000
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["L", "KG", "PCS"]
+        },
+        "inferred": {
+          "type": "boolean"
+        }
+      },
+      "required": ["value", "unit", "inferred"],
+      "additionalProperties": false
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allergenFree": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allergens": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "substitutions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      }
+    },
+    "temperatureCondition": {
+      "type": "number"
+    },
+    "reliability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "carbonKgPerKg": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "id",
+    "names",
+    "brand",
+    "category",
+    "salesUnit",
+    "baseUnit",
+    "packs",
+    "allowedLotSize",
+    "claims",
+    "allergenFree",
+    "allergens",
+    "substitutions"
+  ],
+  "additionalProperties": false
+}
