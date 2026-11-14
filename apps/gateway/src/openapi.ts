@@ -1,4 +1,11 @@
 import { z } from "zod";
+import {
+  profileInputSchema,
+  startSchema,
+  patchSchema,
+  exportSchema,
+  planRefSchema,
+} from "../../../packages/purchasing/src/contracts";
 import { searchInput } from "@aimo/discovery";
 import {
   domainSchemas,
@@ -43,6 +50,54 @@ export function openapi(baseUrl: string) {
     },
     servers: [{ url: baseUrl }],
     paths: {
+      "/v1/kitchen/profiles": {
+        post: operation(
+          "Read customer-scoped kitchen profiles and sourced recipes",
+          z.object({}).strict(),
+        ),
+      },
+      "/v1/kitchen/profile": {
+        post: operation(
+          "Explicitly save versioned kitchen preferences; does not alter purchasing mandates",
+          profileInputSchema,
+        ),
+      },
+      "/v1/kitchen/start": {
+        post: {
+          ...operation(
+            "Start a persisted purchasing preparation job; attachments are transient",
+            startSchema,
+          ),
+          responses: {
+            "202": {
+              description: "Preparation accepted; poll /v1/kitchen/status",
+            },
+            "400": { description: "Invalid or unsaved profile" },
+            "401": { description: "Authentication required" },
+            "403": { description: "Buyer scopes required" },
+            "409": { description: "Idempotency conflict" },
+          },
+        },
+      },
+      "/v1/kitchen/status": {
+        post: operation(
+          "Read an owned preparation job and actual tool progress",
+          planRefSchema,
+        ),
+      },
+      "/v1/kitchen/update": {
+        post: operation(
+          "Revise a menu or choose a supplied product and pack quantity",
+          patchSchema,
+        ),
+      },
+      "/v1/kitchen/export": {
+        post: operation(
+          "Revalidate a reviewed basket; does not place or approve an order",
+          exportSchema,
+        ),
+      },
+
       "/v1/discovery/suggest": {
         post: operation(
           "Instant product suggestions without model calls or vector initialization",

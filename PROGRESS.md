@@ -12,6 +12,15 @@
 
 Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
+## Kitchen purchasing agent — 14 November 2026
+
+- Added `/agent` with persistent editable kitchen preferences, text/menu-photo/voice-note input, actual tool progress, an editable interpretation and an attention-first review. Saved lunch/hotel starter profiles are explicit examples, not inferred history.
+- Gemini provides advisory structured intent; deterministic TypeScript scales three sourced recipes, deducts confirmed pantry weights, selects catalogue candidates, checks signed offers and applies exact/approved SKU rules, claims and budget limits. Missing amounts/content, unknown availability and unsupported dishes remain decisions.
+- Added scoped, revisioned and idempotent preparation APIs with transactional profile/plan writes, ownership checks and refreshed-offer validation before basket export. Existing human approval remains required. Basket handoff supports Undo and preserves exact/approved replacement restrictions through merges and restoration.
+- Live Gemini verification: typed hotel request prepared the approved yoghurt replacement plus exact butter/milk; synthetic menu image and WAV each extracted 80 pasta portions and 5 kg pantry pasta. The nested provider schema initially failed; simplifying the provider schema while retaining full local validation resolved it. A transient local service interruption during testing recovered on retry.
+- Browser verification covered profile save, progress, hotel exception review, basket handoff and a held human-review proposal with the existing weekly limit enforced. Mobile 390 px had no horizontal overflow.  Physical microphone recording is not yet verified. Prices/stock remain mock; no supplier fulfilment or telephone integration was exercised. See `docs/KITCHEN-AGENT-DEMO.md`.
+- Final validation: `pnpm check` passed 162 tests plus the purchasing demo (17 verified ledger events); the subsequent budget-interpretation regression passed in the 16-test agent suite. `pnpm build` passed. Explicit SKU requests remain exact after display-name conversion. Screenshots: `.local/kitchen-agent-desktop.png` (full workspace capture) and `.local/kitchen-agent-mobile.png`.
+
 ## Product-view complementary recommendations — 14 November 2026
 
 - Added “Goes well with this” directly beneath the product Add button, with at most three complementary items, short reasons, pack quantities, prices and individual Add actions. Product alternatives remain a separate inline function.

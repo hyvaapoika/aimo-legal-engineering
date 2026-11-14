@@ -12,6 +12,7 @@ import {
   replacement,
   purchaseStep,
   restoreLines,
+  mergeReplacementIds,
 } from "../apps/web/app/store/cart";
 import { stock } from "../apps/web/app/store/types";
 import type { Offer } from "@aimo/schema";
@@ -188,6 +189,16 @@ describe("Shopping trust and conversion boundaries", () => {
         { ...b, claims: [] },
       ),
     ).toBeNull();
+  });
+  it("retains exact and approved kitchen choices across cart restoration and merges", () => {
+    const p = present(catalog.get("464249"));
+    const line = { product: p, qty: 1, allowedReplacementIds: [p.id] };
+    const restored = restoreLines([line])[0]!;
+    expect(restored.allowedReplacementIds).toEqual([p.id]);
+    expect(replacement(restored, { ...p, id: "different" })).toBeNull();
+    expect(mergeReplacementIds(["a", "b"], ["b", "c"])).toEqual(["b"]);
+    expect(mergeReplacementIds(undefined, ["a"])).toEqual(["a"]);
+    expect(mergeReplacementIds([], ["a"])).toEqual([]);
   });
   it("preserves unknown stock and delivery evidence", () => {
     const o = {

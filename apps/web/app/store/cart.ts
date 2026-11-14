@@ -13,6 +13,8 @@ export function purchaseStep(p: Product) {
   return numerator / gcd(numerator, scale);
 }
 export function replacement(old: Line, next: StoreProduct) {
+  if (old.allowedReplacementIds && !old.allowedReplacementIds.includes(next.id))
+    return null;
   if (!(old.requiredClaims || []).every((c) => next.claims.includes(c)))
     return null;
   const a = old.product.pack.content,
@@ -73,10 +75,24 @@ export function restoreLines(value: unknown): Line[] {
       {
         product,
         qty: l.qty,
+        ...(Array.isArray(l.allowedReplacementIds)
+          ? {
+              allowedReplacementIds: l.allowedReplacementIds
+                .filter((id): id is string => typeof id === "string")
+                .slice(0, 10),
+            }
+          : {}),
         requiredClaims: Array.isArray(l.requiredClaims)
           ? l.requiredClaims.filter((x): x is string => typeof x === "string")
           : [],
       },
     ];
   });
+}
+
+// A merged line must satisfy both original kitchen choices.
+export function mergeReplacementIds(a?: string[], b?: string[]) {
+  if (!a) return b;
+  if (!b) return a;
+  return a.filter((id) => b.includes(id));
 }

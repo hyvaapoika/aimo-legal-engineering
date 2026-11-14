@@ -12,6 +12,12 @@ const routes: Record<string, string> = {
   context: "discovery/context",
   offers: "offers",
   proposals: "proposals",
+  "kitchen/profiles": "kitchen/profiles",
+  "kitchen/profile": "kitchen/profile",
+  "kitchen/start": "kitchen/start",
+  "kitchen/status": "kitchen/status",
+  "kitchen/update": "kitchen/update",
+  "kitchen/export": "kitchen/export",
 };
 async function handler(
   request: NextRequest,
@@ -46,7 +52,7 @@ async function handler(
       { status: 404 },
     );
   const body = request.method === "POST" ? await request.text() : undefined;
-  if (body && body.length > 100000)
+  if (body && body.length > (path === "kitchen/start" ? 4_500_000 : 100000))
     return NextResponse.json(
       { message: "Request is too large." },
       { status: 413 },

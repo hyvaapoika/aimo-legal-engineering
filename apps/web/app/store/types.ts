@@ -33,6 +33,7 @@ export type Line = {
   product: StoreProduct;
   qty: number;
   requiredClaims?: string[];
+  allowedReplacementIds?: string[];
 };
 export const labels: Record<string, string> = {
   FREE_FROM_LACTOSE: "Lactose-free",

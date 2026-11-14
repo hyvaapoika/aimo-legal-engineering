@@ -1,5 +1,7 @@
 # Smart webshop: local demo
 
+For menu-to-basket preparation and hotel exception handling, start with [Kitchen agent demo](KITCHEN-AGENT-DEMO.md) at `/agent`.
+
 Run `pnpm dev` from the repository, then open http://localhost:3100. The homepage uses the full supplied catalogue; `/operations` keeps the existing purchasing controls.
 
 ## Show the customer journey

@@ -1,5 +1,13 @@
 # Implementation decisions and limits
 
+## Current kitchen purchasing agent
+
+`/agent` adds persisted kitchen profiles and owned purchase plans to the existing local webshop. Gemini text/image/audio interpretation is advisory and strictly validated; a bounded deterministic workflow handles recipe quantities, claims, offers, substitutions, budgets and export. It cannot approve or place orders. Exact/approved kitchen choices persist into cart suggestions, while existing server mandates and human approval remain authoritative.
+
+The two starter kitchens are editable examples under the demo customer, not connected restaurant accounts or learned history. Only three reviewed recipes are installed. Unknown recipes, amounts, pack conversions and stock are not invented. Pantry is supplied by the chef, not an inventory feed. No live menu crawler, replenishment scheduler, learned purchasing model or autonomous sales outreach exists.
+
+Live Gemini tests succeeded for a typed hotel order and synthetic menu-photo/WAV requests. The physical browser microphone has not been tested. Voice is recorded input, not a real-time conversation or phone call. Raw attachments are not saved in plan records; they are sent to Gemini on explicit Prepare. The process-local job runner marks interrupted tasks retryable after two minutes rather than resuming them. Mock supplier prices and stock, limited verified photos, localhost-only buyer access, and separate human approval remain unchanged. See `KITCHEN-AGENT-DEMO.md`.
+
 ## Current smart-webshop verification (14 November 2026)
 
 The full-catalogue storefront is implemented locally. Gemini structured interpretation was exercised with the supplied server-side key; all 17,546 static documents were embedded with a local multilingual MiniLM model after the Gemini embedding quota was exhausted. No paid upgrade or managed vector service was enabled. Earlier provider-status notes below describe earlier implementation stages.

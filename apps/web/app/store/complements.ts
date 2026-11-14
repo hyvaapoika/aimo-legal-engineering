@@ -197,7 +197,7 @@ export function addComplement(
     .plus(complementQuantity(product))
     .toNumber();
   if (qty > 100000) throw new Error("Choose a smaller quantity.");
-  const line = { product, qty, requiredClaims };
+  const line = { ...existing, product, qty, requiredClaims };
   return existing
     ? cart.map((l) => (l.product.id === product.id ? line : l))
     : [...cart, line];

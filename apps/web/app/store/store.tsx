@@ -53,7 +53,7 @@ import {
   cookingIntent,
   type Recipe,
 } from "./recipe-state";
-import { replacement, cents, restoreLines } from "./cart";
+import { replacement, cents, restoreLines, mergeReplacementIds } from "./cart";
 import { Decimal } from "decimal.js";
 const groups = [
   "All products",
@@ -336,6 +336,33 @@ export default function Store() {
         if (priceSerial.current === current) setPricing(false);
       });
   }, [date, priceIds]);
+  useEffect(() => {
+    if (!hydrated) return;
+    const raw = sessionStorage.getItem("aimo-prepared-basket");
+    if (!raw) return;
+    try {
+      const incoming = JSON.parse(raw);
+      const lines = restoreLines(incoming.lines);
+      if (
+        !lines.length ||
+        lines.length !== incoming.lines.length ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(incoming.date)
+      )
+        throw new Error("Invalid prepared basket");
+      changeCart(
+        lines,
+        "Prepared basket added. Review it before requesting human approval.",
+      );
+      setDate(incoming.date);
+      setView({ kind: "cart" });
+      sessionStorage.removeItem("aimo-prepared-basket");
+    } catch {
+      setToast(
+        "The prepared basket could not be restored. Return to your kitchen plan.",
+      );
+      sessionStorage.removeItem("aimo-prepared-basket");
+    }
+  }, [hydrated]);
   const search = (q: string, enhance = true) => {
     typing.current = false;
     setSelectedRecipe(null);
@@ -385,6 +412,7 @@ export default function Store() {
     }
     if (n)
       next.push({
+        ...cart.find((l) => l.product.id === p.id),
         product: p,
         qty: n,
         requiredClaims: cart.find((l) => l.product.id === p.id)
@@ -451,6 +479,10 @@ export default function Store() {
         {
           product: next,
           qty: count + existing,
+          allowedReplacementIds: mergeReplacementIds(
+            line.allowedReplacementIds,
+            cart.find((l) => l.product.id === next.id)?.allowedReplacementIds,
+          ),
           requiredClaims: [
             ...new Set([
               ...(line.requiredClaims || []),
@@ -656,6 +688,9 @@ export default function Store() {
           >
             Shop
           </button>
+          <Link className="a-agent-link" href="/agent">
+            Prepare my order
+          </Link>
           <button onClick={() => setSavedOpen(true)}>Saved lists</button>
           <button
             onClick={() => {
@@ -689,6 +724,14 @@ export default function Store() {
           </button>
         </div>
       </header>
+      <div className="r-agent-entry">
+        <Link href="/agent">
+          <Sparkles size={18} />
+          <span>Planning the next service?</span>
+          <strong>Let Aimo prepare your order</strong>
+          <ArrowRight size={17} />
+        </Link>
+      </div>
       <section className="r-composer">
         {!input.trim() && <h1>What’s on the menu?</h1>}
         <form onSubmit={submitSearch}>
@@ -784,6 +827,10 @@ export default function Store() {
                 const old = merged.get(l.product.id);
                 merged.set(l.product.id, {
                   ...l,
+                  allowedReplacementIds: mergeReplacementIds(
+                    old?.allowedReplacementIds,
+                    l.allowedReplacementIds,
+                  ),
                   qty: new Decimal(old?.qty || 0).plus(l.qty).toNumber(),
                   requiredClaims: [
                     ...new Set([
@@ -1401,7 +1448,14 @@ export default function Store() {
                     <ProductMedia product={l.product} />
                     <div>
                       <strong>{productName(l.product)}</strong>
-                      <small>{packText(l.product)}</small>
+                      <small>
+                        {packText(l.product)}
+                        {l.allowedReplacementIds?.length === 1
+                          ? " · Exact kitchen choice"
+                          : l.allowedReplacementIds
+                            ? " · Approved kitchen choices only"
+                            : ""}
+                      </small>
                       <div className="s-quantity">
                         <button
                           aria-label={`Remove one ${productName(l.product)}`}

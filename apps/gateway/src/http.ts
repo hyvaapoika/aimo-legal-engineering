@@ -1,3 +1,5 @@
+import { KitchenAgent, publicPlan } from "./purchasing/agent.js";
+import { planRefSchema } from "../../../packages/purchasing/src/contracts";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { z, ZodError } from "zod";
@@ -24,10 +26,15 @@ export function createApp(
   config: Configuration,
   voiceAdapter?: BrowserVoice,
 ) {
+  const kitchen = new KitchenAgent(service);
   const voice = voiceAdapter ?? browserVoice(service, config.stateDir);
   const app = new Hono<{ Variables: { agent: Agent } }>();
   const limits = new Map<string, { count: number; reset: number }>();
-  app.use("*", bodyLimit({ maxSize: 1_000_000 }));
+  app.use("*", (c, next) =>
+    bodyLimit({
+      maxSize: c.req.path === "/v1/kitchen/start" ? 4_500_000 : 1_000_000,
+    })(c, next),
+  );
   app.use("*", async (c, next) => {
     c.header("X-Content-Type-Options", "nosniff");
     c.header("Cache-Control", "no-store");
@@ -238,6 +245,17 @@ export function createApp(
           : c.req.method === "POST"
             ? "proposals:write"
             : "orders:read";
+    if (
+      c.req.path.startsWith("/v1/kitchen/") &&
+      !["catalog:read", "offers:read", "proposals:write"].every((s) =>
+        agent.scopes.includes(s as Agent["scopes"][number]),
+      )
+    )
+      throw new DomainError(
+        "MISSING_SCOPE",
+        "Kitchen planning requires catalogue, offers and proposal scopes.",
+        403,
+      );
     if (!agent.scopes.includes(scope))
       throw new DomainError("MISSING_SCOPE", `Requires ${scope}.`, 403);
     await next();
@@ -295,6 +313,36 @@ export function createApp(
       .parse(await c.req.json());
     return c.json(service.discovery.alternatives(x.id));
   });
+  app.post("/v1/kitchen/profiles", async (c) =>
+    c.json(await kitchen.profiles(c.get("agent"))),
+  );
+  app.post("/v1/kitchen/profile", async (c) =>
+    c.json(await kitchen.saveProfile(c.get("agent"), await c.req.json())),
+  );
+  app.post("/v1/kitchen/start", async (c) =>
+    c.json(
+      publicPlan(await kitchen.start(c.get("agent"), await c.req.json())),
+      202,
+    ),
+  );
+  app.post("/v1/kitchen/status", async (c) =>
+    c.json(
+      publicPlan(
+        await kitchen.get(
+          c.get("agent"),
+          planRefSchema.parse(await c.req.json()).id,
+        ),
+      ),
+    ),
+  );
+  app.post("/v1/kitchen/update", async (c) =>
+    c.json(
+      publicPlan(await kitchen.update(c.get("agent"), await c.req.json())),
+    ),
+  );
+  app.post("/v1/kitchen/export", async (c) =>
+    c.json(await kitchen.export(c.get("agent"), await c.req.json())),
+  );
   app.post("/v1/offers", async (c) =>
     c.json(await service.getOffers(c.get("agent"), await c.req.json())),
   );
