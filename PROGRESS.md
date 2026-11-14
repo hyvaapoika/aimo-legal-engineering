@@ -12,6 +12,13 @@
 
 Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
+## Proactive alternatives — 14 November 2026
+
+- Removed the separate “Find alternatives” buttons and drawer. Product details automatically load one eligible option; blocked catalogue cards show a replacement inline. Basket and recipe rows surface one option when it resolves a known shortage or saves at least €1 on the converted pack total.
+- Suggestions include product identity, sales-pack quantity, total, any excess contents and the supplier-listed/same-type basis. All swaps are explicit, with basket Undo. No additional LLM call is needed.
+- Deterministic ranking rejects unknown/insufficient stock, later delivery, incompatible units, missing pack contents and missing required dietary declarations. Recipe suggestions must also match the published ingredient requirement; subsequent portion edits continue to scale automatically.
+- Verified in the browser with mock offers: changing cream from 3 to 4 pieces surfaced a lower-total 10 L option with the extra 6 L stated; Swap updated the basket and Undo restored four original pieces. No real supplier write occurred. `pnpm check` passed with 140 tests and the purchasing demo; `pnpm build` passed. Mobile 390 px had no horizontal overflow. Screenshot: `.local/proactive-alternative-mobile.png`.
+
 ## Live chef workspace and search latency — 14 November 2026
 
 - Removed the large promotional hero, local/hackathon banners and repeated explanatory copy. One conversational composer drives recipe cards, an editable ingredient workspace and the existing catalogue/basket controls. Small sample-price labels remain where money is shown.

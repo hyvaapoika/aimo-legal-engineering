@@ -1,4 +1,5 @@
 "use client";
+import { InlineAlternative } from "./inline-alternative";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -371,6 +372,33 @@ export function RecipeBuilder({
                       </b>
                     )}
                   </div>
+                )}
+                {product && isReady && qty !== null && qty === auto && (
+                  <InlineAlternative
+                    line={{ product, qty, requiredClaims: claims }}
+                    date={date}
+                    currentOffer={offers[product.id]}
+                    samplePrices={source !== "valio"}
+                    accept={(next, nextQty) =>
+                      ingredientQuantity(amount, next) === nextQty
+                    }
+                    onSelect={(next) => {
+                      setOptions((old) => ({
+                        ...old,
+                        [i.id]: [
+                          ...(old[i.id] || []).filter((p) => p.id !== next.id),
+                          next,
+                        ],
+                      }));
+                      setChosen((old) => ({ ...old, [i.id]: next.id }));
+                      setManual((old) => {
+                        const updated = { ...old };
+                        delete updated[i.id];
+                        return updated;
+                      });
+                      setAdded(false);
+                    }}
+                  />
                 )}
                 {open === i.id && !i.water && (
                   <div className="r-picks">

@@ -42,6 +42,7 @@ import {
 } from "./types";
 import "./store.css";
 import "./live.css";
+import { InlineAlternative } from "./inline-alternative";
 import { RecipeBuilder } from "./recipe-builder";
 import { basicIntent } from "../../../../packages/discovery/src/intent";
 import {
@@ -72,7 +73,6 @@ type View =
   | { kind: "detail"; product: StoreProduct }
   | { kind: "compare" }
   | { kind: "cart" }
-  | { kind: "alternatives"; product: StoreProduct }
   | null;
 function Drawer({
   title,
@@ -129,9 +129,7 @@ export default function Store() {
     [previous, setPrevious] = useState<Line[]>(),
     [compare, setCompare] = useState<StoreProduct[]>([]),
     [view, setView] = useState<View>(null);
-  const [alternatives, setAlternatives] = useState<StoreProduct[]>([]),
-    [alternativesBusy, setAlternativesBusy] = useState(false),
-    [filterOpen, setFilterOpen] = useState(false),
+  const [filterOpen, setFilterOpen] = useState(false),
     [toast, setToast] = useState(""),
     [hydrated, setHydrated] = useState(false),
     [saved, setSaved] = useState<Line[][]>([]),
@@ -297,11 +295,9 @@ export default function Store() {
   const extra =
     view?.kind === "compare"
       ? compare
-      : view?.kind === "alternatives"
-        ? alternatives
-        : view?.kind === "detail"
-          ? [view.product]
-          : [];
+      : view?.kind === "detail"
+        ? [view.product]
+        : [];
   const priceIds = [
     ...new Set(
       [
@@ -423,25 +419,17 @@ export default function Store() {
           : s,
     );
   };
-  const openAlternatives = async (p: StoreProduct) => {
-    setView({ kind: "alternatives", product: p });
-    setAlternatives([]);
-    setAlternativesBusy(true);
-    try {
-      const r = await api<{ products: StoreProduct[] }>("alternatives", {
-        id: p.id,
-      });
-      setAlternatives(r.products);
-    } catch (e) {
-      setToast((e as Error).message);
-    } finally {
-      setAlternativesBusy(false);
-    }
-  };
-  const replace = (old: StoreProduct, next: StoreProduct) => {
+  const replace = (
+    old: StoreProduct,
+    next: StoreProduct,
+    qty = minimum(next),
+  ) => {
     const line = cart.find((l) => l.product.id === old.id);
     if (!line) {
-      add(next);
+      setQuantity(
+        next,
+        (cart.find((l) => l.product.id === next.id)?.qty || 0) + qty,
+      );
       return;
     }
     const conversion = replacement(line, next);
@@ -628,14 +616,22 @@ export default function Store() {
                 </>
               )}
             </button>
-            <button
-              className="s-icon"
-              aria-label={`Alternatives for ${productName(p)}`}
-              onClick={() => openAlternatives(p)}
-            >
-              <SlidersHorizontal size={18} />
-            </button>
           </div>
+          {availability.status === "blocked" && (
+            <InlineAlternative
+              line={{
+                product: p,
+                qty: minimum(p),
+                requiredClaims: [...claims, ...(result?.intent.claims || [])],
+              }}
+              date={date}
+              currentOffer={offer}
+              always
+              action="Add"
+              samplePrices={context?.source !== "valio"}
+              onSelect={(next, qty) => replace(p, next, qty)}
+            />
+          )}
         </div>
       </article>
     );
@@ -1218,12 +1214,26 @@ export default function Store() {
             >
               Add to basket <Plus size={18} />
             </button>
-            <button
-              className="s-button"
-              onClick={() => openAlternatives(view.product)}
-            >
-              Find alternatives <SlidersHorizontal size={17} />
-            </button>
+            <InlineAlternative
+              line={
+                cart.find((l) => l.product.id === view.product.id) || {
+                  product: view.product,
+                  qty: minimum(view.product),
+                  requiredClaims: [...claims, ...(result?.intent.claims || [])],
+                }
+              }
+              date={date}
+              currentOffer={offers[view.product.id]}
+              always
+              disabled={submitting}
+              samplePrices={context?.source !== "valio"}
+              action={
+                cart.some((l) => l.product.id === view.product.id)
+                  ? "Swap"
+                  : "Add"
+              }
+              onSelect={(next, qty) => replace(view.product, next, qty)}
+            />
             <div className="s-detail-claims">
               {view.product.claims.map((c) => (
                 <span key={c}>
@@ -1334,96 +1344,6 @@ export default function Store() {
           </div>
         </Drawer>
       )}
-      {view?.kind === "alternatives" && (
-        <Drawer title="Find another fit" wide close={() => setView(null)}>
-          <div className="s-original">
-            <ProductMedia product={view.product} />
-            <div>
-              <small>CURRENT PRODUCT</small>
-              <h3>{productName(view.product)}</h3>
-              <p>{packText(view.product)}</p>
-            </div>
-          </div>
-          <p className="s-panel-intro">
-            Candidates preserve the original product’s explicit dietary
-            properties. Check recipe suitability and availability before
-            choosing.
-          </p>
-          {alternativesBusy ? (
-            <p className="s-panel-intro">Finding alternatives…</p>
-          ) : alternatives.length ? (
-            <div className="s-alternatives">
-              {alternatives.map((p) => (
-                <article key={p.id}>
-                  <ProductMedia product={p} />
-                  <div>
-                    <small>{p.reasons[0]}</small>
-                    <h3>{productName(p)}</h3>
-                    <p>{packText(p)}</p>
-                    <strong>
-                      {offers[p.id]?.price
-                        ? money(offers[p.id]!.price!.value)
-                        : "Price unconfirmed"}
-                    </strong>
-                    <p>{stock(offers[p.id], date).label}</p>
-                    {(() => {
-                      const line = cart.find(
-                        (l) => l.product.id === view.product.id,
-                      );
-                      if (!line) return null;
-                      const r = replacement(line, p);
-                      if (!r)
-                        return (
-                          <p>Pack conversion or required claims unconfirmed.</p>
-                        );
-                      const a = offers[view.product.id]?.price?.value,
-                        b = offers[p.id]?.price?.value;
-                      return (
-                        <p className="s-replacement-impact">
-                          {line.qty} {unitLabel(view.product.salesUnit)} →{" "}
-                          {r.qty} {unitLabel(p.salesUnit)} · {r.excess} {r.unit}{" "}
-                          extra
-                          {a !== undefined && b !== undefined
-                            ? ` · ${money((cents(r.qty, b) - cents(line.qty, a)) / 100)} change`
-                            : " · price difference unconfirmed"}
-                        </p>
-                      );
-                    })()}
-                    <button
-                      className="s-button"
-                      disabled={
-                        stock(offers[p.id], date).status === "blocked" ||
-                        !!(
-                          cart.find((l) => l.product.id === view.product.id) &&
-                          !replacement(
-                            cart.find((l) => l.product.id === view.product.id)!,
-                            p,
-                          )
-                        )
-                      }
-                      onClick={() => replace(view.product, p)}
-                    >
-                      {cart.some((l) => l.product.id === view.product.id)
-                        ? "Use this replacement"
-                        : "Add this product"}{" "}
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="s-empty">
-              <Package size={30} />
-              <h3>No verified candidate found</h3>
-              <p>
-                Try browsing a broader selection, keeping your dietary
-                requirements in mind.
-              </p>
-            </div>
-          )}
-        </Drawer>
-      )}
       {view?.kind === "cart" && (
         <Drawer title="Your basket" close={() => setView(null)}>
           <div className="s-cart-context">
@@ -1496,12 +1416,14 @@ export default function Store() {
                           <Plus size={15} />
                         </button>
                       </div>
-                      <button
-                        className="s-text-link"
-                        onClick={() => openAlternatives(l.product)}
-                      >
-                        Alternatives
-                      </button>
+                      <InlineAlternative
+                        line={l}
+                        date={date}
+                        currentOffer={offers[l.product.id]}
+                        disabled={submitting}
+                        samplePrices={context?.source !== "valio"}
+                        onSelect={(next, qty) => replace(l.product, next, qty)}
+                      />
                     </div>
                     <strong>
                       {offers[l.product.id]?.price

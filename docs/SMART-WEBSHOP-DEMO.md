@@ -8,7 +8,7 @@ Run `pnpm dev` from the repository, then open http://localhost:3100. The homepag
 2. The ingredient workspace scales the published recipe. Say **Make it for 120 people. I already have pasta and carrots.** in the same input. Portions update and those ingredients are excluded from the shopping selection.
 3. Review products and pack quantities. Missing quantities and unverified conversions need a manual choice. **Add selected items** adds only ready rows; it does not quietly treat the whole recipe as complete.
 4. Clear the input and type **lactose-free cooking cream, 1 litre** to use the full catalogue. Product suggestions arrive first, with background intent/semantic refinement after an idle pause. Compare products, inspect supplier declarations, and edit the basket normally.
-5. Open **Alternatives** in the basket. Review quantity, contents and price changes before applying; **Undo last basket change** restores the previous selection.
+5. Alternatives appear automatically: product details show one option, and basket/recipe rows highlight a verified replacement or lower total. Review pack count, extra contents and total before **Swap**; **Undo last basket change** restores the previous selection. No “Find alternatives” step remains.
 6. **Request human approval** refreshes signed offers and submits a proposal. The separate Operations login handles review; no order is placed directly from the shopping controls.
 7. Save a basket to reuse it. Only actual saved baskets in this browser contribute to recipe/product preference ranking. There is no imported customer order history.
 

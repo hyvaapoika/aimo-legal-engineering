@@ -21,6 +21,10 @@ Recipe matching and bounded portion/pantry interpretation run locally as text ch
 
 The [OpenUI renderer](https://www.openui.com/docs/openui-lang/renderer) was reviewed. No OpenUI dependency or generated UI language is installed: the application already renders typed React recipe/product/quantity controls. The revised visual design does not change the localhost-only authentication boundary or make the application production-ready. Prices remain explicitly marked as sample data in mock mode.
 
+## Proactive replacement suggestions
+
+Alternatives are fetched automatically in product details and relevant shopping contexts. The initial policy surfaces one option for a verified shortage or at least €1 lower converted total; this threshold is an application choice, not a learned user preference. Details can also show a neutral pack alternative. Supplier-listed or same-type/category candidates still require the chef's suitability judgment. Quantity, dietary declarations, comparable units and sufficient known stock are checked in TypeScript; unknown stock is never promoted as available. Savings compare complete rounded sales-pack totals and state excess contents. Mock prices remain labelled, so the measured savings are demo illustrations, not a real supplier discount. Swaps remain explicit and checkout revalidates signed offers.
+
 ## Historical chef interface preview — superseded
 
 - The root page is now a local chef design preview; the existing authenticated gateway dashboard is at `/operations`. Its approval/order/voice behavior is retained.
