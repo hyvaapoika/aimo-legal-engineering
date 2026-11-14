@@ -42,6 +42,8 @@ import {
 } from "./types";
 import "./store.css";
 import "./live.css";
+import { ProductComplements } from "./product-complements";
+import { addComplement } from "./complements";
 import { InlineAlternative } from "./inline-alternative";
 import { RecipeBuilder } from "./recipe-builder";
 import { basicIntent } from "../../../../packages/discovery/src/intent";
@@ -1214,6 +1216,32 @@ export default function Store() {
             >
               Add to basket <Plus size={18} />
             </button>
+            <ProductComplements
+              product={view.product}
+              cart={cart}
+              saved={saved}
+              claims={[
+                ...new Set([
+                  ...claims,
+                  ...(result?.intent.claims || []),
+                  ...(cart.find((l) => l.product.id === view.product.id)
+                    ?.requiredClaims || []),
+                ]),
+              ]}
+              date={date}
+              samplePrices={context?.source !== "valio"}
+              disabled={submitting}
+              onAdd={(p, required) => {
+                try {
+                  changeCart(
+                    addComplement(cart, p, required),
+                    `${productName(p)} added to your basket.`,
+                  );
+                } catch (e) {
+                  setToast((e as Error).message);
+                }
+              }}
+            />
             <InlineAlternative
               line={
                 cart.find((l) => l.product.id === view.product.id) || {

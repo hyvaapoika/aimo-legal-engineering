@@ -8,9 +8,10 @@ Run `pnpm dev` from the repository, then open http://localhost:3100. The homepag
 2. The ingredient workspace scales the published recipe. Say **Make it for 120 people. I already have pasta and carrots.** in the same input. Portions update and those ingredients are excluded from the shopping selection.
 3. Review products and pack quantities. Missing quantities and unverified conversions need a manual choice. **Add selected items** adds only ready rows; it does not quietly treat the whole recipe as complete.
 4. Clear the input and type **lactose-free cooking cream, 1 litre** to use the full catalogue. Product suggestions arrive first, with background intent/semantic refinement after an idle pause. Compare products, inspect supplier declarations, and edit the basket normally.
-5. Alternatives appear automatically: product details show one option, and basket/recipe rows highlight a verified replacement or lower total. Review pack count, extra contents and total before **Swap**; **Undo last basket change** restores the previous selection. No “Find alternatives” step remains.
-6. **Request human approval** refreshes signed offers and submits a proposal. The separate Operations login handles review; no order is placed directly from the shopping controls.
-7. Save a basket to reuse it. Only actual saved baskets in this browser contribute to recipe/product preference ranking. There is no imported customer order history.
+5. Click a product such as **Barilla 5kg Fusilli dry pasta**. **Goes well with this** shows sauce, grated cheese and fresh basil with individual Add buttons. Add one and check that it enters the basket and its suggestion group disappears. Undo is available.
+6. Alternatives appear automatically: product details show one option, and basket/recipe rows highlight a verified replacement or lower total. Review pack count, extra contents and total before **Swap**; **Undo last basket change** restores the previous selection. No “Find alternatives” step remains.
+7. **Request human approval** refreshes signed offers and submits a proposal. The separate Operations login handles review; no order is placed directly from the shopping controls.
+8. Save a basket to reuse it. Only actual saved baskets in this browser contribute to recipe/product preference ranking. There is no imported customer order history.
 
 Three verified public Valio recipes are available; this is not yet a complete recipe bank. Recipe sources are linked within the workspace. Sample-price labels remain next to monetary figures because the current supplier adapter is mocked.
 

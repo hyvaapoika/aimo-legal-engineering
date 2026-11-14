@@ -12,6 +12,15 @@
 
 Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
+## Product-view complementary recommendations — 14 November 2026
+
+- Added “Goes well with this” directly beneath the product Add button, with at most three complementary items, short reasons, pack quantities, prices and individual Add actions. Product alternatives remain a separate inline function.
+- Candidate sources are curated meal-pairing rules, the three sourced recipes, and actual co-occurrence in this browser's saved baskets. No aggregate “frequently bought together” claim, purchase-history model, paid recommendation service or sales-uplift measurement is implied.
+- Reuses the fast catalogue suggest/offer endpoints without a new model call. Excludes the viewed SKU, same-type substitutes, duplicate recommendation groups, products already in the basket and completed add-on groups. Unknown/insufficient stock, missing prices and unsupported explicit dietary claims cannot be promoted.
+- Additions retain dietary requirements, add a legal whole sales-pack increment for packaged goods, preserve existing basket lines and support Undo. Generic 0.01 supplier lots are not displayed as 0.01 of a case. Missing-photo placeholders in product details were reduced so recommendations appear sooner.
+- Browser test: opening Barilla pasta surfaced tomato sauce, grated cheese and fresh basil; adding sauce produced one piece in the basket and removed the sauce recommendation group. Undo restored the prior basket. Verification used mock prices and stock, with no real supplier order.
+- `pnpm check` passed with 146 tests and the purchasing demo; `pnpm build` passed. Desktop 1440 px and mobile 390 px layouts had no horizontal overflow. Screenshots: `.local/product-complements-desktop.png` and `.local/product-complements-mobile.png`.
+
 ## Proactive alternatives — 14 November 2026
 
 - Removed the separate “Find alternatives” buttons and drawer. Product details automatically load one eligible option; blocked catalogue cards show a replacement inline. Basket and recipe rows surface one option when it resolves a known shortage or saves at least €1 on the converted pack total.
