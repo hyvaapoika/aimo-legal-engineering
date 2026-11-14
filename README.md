@@ -2,7 +2,7 @@
 
 A working Junction 2026 purchasing gateway over the supplied Valio Aimo catalog. External agents search products, obtain signed fixed-price offers, and submit proposals. Deterministic rules produce **AUTO**, **HOLD**, or **REFUSE**. A registered human can approve policy exceptions through the webshop; impossible quantities, blocked products, missing claims, and invalid offers cannot be waved through.
 
-**Local demo is implemented and tested. Order placement is simulated. Live Valio access needs your API key. Voice and SMS are disabled; no messages or calls are sent.** See [implementation decisions](docs/ASSUMPTIONS.md) for the exact departures from the original plan.
+**Local demo is implemented and tested. Order placement is simulated. Valio's hosted challenge APIs also use synthetic data and require your API key. Voice and SMS are disabled; no messages or calls are sent.** See [challenge fit](docs/CHALLENGE-FIT.md) for the judging criteria and [implementation decisions](docs/ASSUMPTIONS.md) for the exact departures from the original plan.
 
 ## Run
 
@@ -46,9 +46,11 @@ No provider key or Docker daemon is needed for this path. Embedded PostgreSQL, s
 | `pnpm build`                      | Typecheck and production Next.js build through Turborepo                                                   |
 | `pnpm start`                      | Start the gateway and built webshop; set production credentials first                                      |
 
-## Add the Valio key later
+## Connect Valio's hosted mock backend
 
 Edit `.env` locally:
+
+The adapter name `LiveValioClient` and `MOCK_VALIO=false` mean HTTP calls to the hosted challenge service, not production supplier data or real order fulfillment.
 
 ```dotenv
 MOCK_VALIO=false

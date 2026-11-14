@@ -10,7 +10,7 @@
 - [x] Automated domain, cryptographic, lifecycle, MCP, and persistence verification.
 - [x] Desktop and mobile browser verification of sign-in, approval, order detail, quantity amendment, catalog, mandate editor, and ledger verification.
 
-Scope: local working hackathon application. Live provider checks and public deployment need credentials/configuration and are recorded separately from local verification.
+Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
 ## Verified on 14 November 2026
 
@@ -24,10 +24,12 @@ Scope: local working hackathon application. Live provider checks and public depl
 - Browser: approved the €4,042 replenishment request; order and ledger updated without reload. Changed fish from 150 KG to 100 KG; the new proposal required a separate policy approval before its €1,390 order was placed.
 - Mobile: checked at 390 × 844; navigation, receipt layout, and responsive stats rendered without horizontal page overflow.
 - Evidence: `.local/webshop-preview.jpg` and `.local/approved-order.jpg` (ignored local artifacts).
+- Supplied challenge brief reviewed against all five judging criteria; see `docs/CHALLENGE-FIT.md`. Credentials removed from the repository copy.
+- Valio hosted mock backend: supplied key saved only in ignored `.env`; `/api/ping`, `/api/price`, and `/api/availability` returned HTTP 200. The actual TypeScript adapter also passed ping and schema-validated lookup for product 464201, customer hotel-haven, delivery 2026-11-16. This is a lookup smoke test, not a hosted end-to-end purchasing rehearsal. Running app remains in local fixture mode.
 
 ## External and optional boundaries
 
-- Live Valio calls await `VALIO_API_KEY`. No authentication bypass or mock fallback is used in live mode.
+- Hosted Valio lookup is verified. The full signed offer → proposal → approval → order flow against that backend still needs rehearsal. No authentication bypass or mock fallback is used in hosted mode.
 - Claude and Gemini adapters are implemented/typechecked; paid calls were not made without keys.
 - Voice/SMS are disabled and are not represented as working integrations. The plan explicitly permits the `VOICE_ENABLED=false` path.
 - Partial auto-placement, vector search, A2A task execution, production SSO, and certified Peppol validation are outside this delivered local demo. See `docs/ASSUMPTIONS.md` for precise behavior and rationale.
