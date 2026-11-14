@@ -65,6 +65,12 @@ Restart both servers. Sign into the web interface with `ADMIN_TOKEN`. `VALIO_API
 
 The two authentication layers are separate: Valio's `/api` uses `X-API-Key`; this gateway's `/v1` and `/mcp` use registered agent signatures or its optional bearer fallback. `/admin` requires the separate human/admin credential. The web `/api` routes use an HttpOnly session cookie and same-origin mutation checks.
 
+## ElevenLabs voice setup
+
+ElevenLabs onboarding stores `ELEVENLABS_API_KEY` in the ignored root `.env.local`. The server-only SDK client loads that file without printing credentials. Run `pnpm voice:setup` to create the private English-language quotation assistant, or `pnpm voice:check` to verify an existing project agent. Its ID is stored in ignored `.local/elevenlabs-agent.json`. These commands do not place calls or generate speech.
+
+This is provider setup, not completed voice approval: the agent has no approval tool or telephone connection yet and explicitly says it cannot record decisions. The gateway's `VOICE_ENABLED` flag remains disabled. See [voice integration plan](docs/VOICE-APPROVAL-PLAN.md), including the Twilio trial's audio-streaming restriction.
+
 ## Connect another agent
 
 Discovery: [localhost:4000/.well-known/aimo-agent.json](http://localhost:4000/.well-known/aimo-agent.json). REST specification: [localhost:4000/openapi.json](http://localhost:4000/openapi.json). Public key: [localhost:4000/.well-known/jwks.json](http://localhost:4000/.well-known/jwks.json).

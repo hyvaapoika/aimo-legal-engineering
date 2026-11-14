@@ -29,6 +29,9 @@ Scope: local working hackathon application. Hosted provider checks and public de
 
 ## External and optional boundaries
 
+- ElevenLabs CLI onboarding completed: key stored in ignored `.env.local`, official SDK installed, private English agent created and read back, and a short CLI text-to-speech test returned HTTP 200. Project TypeScript checks pass after SDK integration. This does not verify a conversational call or voice approval.
+- Twilio template call reached the user's phone; they confirmed declining it. Provider status was `busy`, duration `0`. Trial documentation blocks streaming; a full ElevenLabs telephone agent is not verified on this account.
+
 - Hosted Valio lookup is verified. The full signed offer → proposal → approval → order flow against that backend still needs rehearsal. No authentication bypass or mock fallback is used in hosted mode.
 - Claude and Gemini adapters are implemented/typechecked; paid calls were not made without keys.
 - Voice/SMS are disabled and are not represented as working integrations. The plan explicitly permits the `VOICE_ENABLED=false` path.

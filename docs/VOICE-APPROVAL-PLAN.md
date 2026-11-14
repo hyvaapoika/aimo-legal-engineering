@@ -1,6 +1,6 @@
 # Live voice approval: researched integration plan
 
-Status: researched; one Twilio template call attempted, returned busy without a connected conversation. Quotation voice approval is not implemented or call-tested. Existing application voice support remains disabled. This document records the user's new requirements; it does not claim that the current application meets them.
+Status: Twilio reached the user's phone (user confirmed they declined the test call). ElevenLabs onboarding, SDK integration, and creation/read-back of a private English-language agent succeeded. Quotation voice approval is not implemented or call-tested. Existing application voice support remains disabled. This document records the user's new requirements; it does not claim that the current application meets them.
 
 ## Confirmed product requirements
 
@@ -64,7 +64,11 @@ UI direction: 16–18px primary text; readable status labels; sans-serif heading
 6. Trust tests: unconfigured recipient, expired/revised quotation, forged or duplicated provider requests, duplicate start clicks, and concurrent app/phone decisions.
 7. Full rehearsal: restaurant inventory trigger → catalogue → hosted Valio lookup → quotation → phone approval → simulated order, with visible progress throughout.
 
-Current local state: Twilio credentials, caller number, and demo recipient are configured only in ignored `.env`. No ElevenLabs key/agent/phone-number ID is configured. The user-supplied Twilio speech-recognition template request returned HTTP 201; the call subsequently ended with status `busy` and duration `0`. No connected voice conversation or quotation approval has been verified. Safe call metadata is in ignored `.local/twilio-call-test.json`. No automatic retry was made.
+Current local state: Twilio credentials, caller number, and demo recipient are configured only in ignored `.env`. The user-supplied Twilio speech-recognition template request returned HTTP 201; the call subsequently ended with status `busy` and duration `0`. The user confirmed it rang and they declined it. No connected telephone conversation or quotation approval has been verified. Safe call metadata is in ignored `.local/twilio-call-test.json`. No automatic retry was made.
+
+ElevenLabs CLI onboarding created a key in ignored `.env.local`. The official SDK is installed, and the server-only client loads that key from the workspace root. `pnpm voice:setup` created a private English-language agent; its persisted ID is in ignored `.local/elevenlabs-agent.json`. `pnpm voice:check` reads it back without generating speech or making calls. The agent has no decision tools and honestly explains that it cannot record approval or place orders. No phone number is imported into ElevenLabs yet. The provider rejected Flash v2.5 for this English agent, so the accepted configuration uses `eleven_flash_v2`.
+
+The onboarding CLI's short text-to-speech test succeeded with HTTP 200. Its audio is preserved in ignored `.local/elevenlabs-test.mp3`. This proves speech generation with the configured account; it does not prove conversational turn-taking, phone streaming, or approval correctness. Project TypeScript checks pass.
 
 The current Twilio trial guide explicitly blocks `<Stream>`, `<ConversationRelay>`, and SIP dialling. This rules out assuming the documented streaming-based ElevenLabs telephone integration will work on the trial. `<Say>`, speech `<Gather>`, and `<Play>` are supported, with a 10-hop limit and 10-minute maximum per call. A turn-by-turn assistant using speech recognition, a model response, and audio playback is a possible trial-compatible design; custom callback routing and latency still require actual verification. Browser ElevenLabs remains the alternative for fluid conversational testing without telephone streaming. [Voice trial guide](https://www.twilio.com/docs/usage/trials/try-out-voice).
 
