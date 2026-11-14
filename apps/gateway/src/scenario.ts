@@ -68,3 +68,46 @@ export async function runDemoScenario(service: GatewayService) {
     note: "Prices and availability are synthetic scenario fixtures; products and comparison signals are supplied challenge data.",
   };
 }
+
+// Small, feasible replenishment for the interactive human approval demo.
+// Catalog products are supplied data; prices and stock are explicitly synthetic.
+export async function runPurchaseDemo(
+  service: GatewayService,
+  idempotencyKey: string,
+) {
+  const agent = await service.agent(DEMO_AGENT);
+  const prior = (await service.snapshot()).proposals.find(
+    (p) => p.agentId === agent.id && p.idempotencyKey === idempotencyKey,
+  );
+  if (prior) return { proposal: prior };
+  const requestedDate = new Date(service.now().getTime() + 2 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const requirements = [
+    { id: "464201", qty: 24, unit: "L" as const },
+    { id: "475797", qty: 2, unit: "KG" as const },
+    { id: "476812", qty: 6, unit: "KG" as const },
+    { id: "460428", qty: 3, unit: "KG" as const },
+  ];
+  const { offers } = await service.getOffers(agent, {
+    productIds: requirements.map((r) => r.id),
+    requestedDate,
+  });
+  const proposal = await service.submit(agent, {
+    requestedDate,
+    deliverySite: "haven-kitchen",
+    idempotencyKey,
+    lines: requirements.map((r) => {
+      const offer = offers.find((o) => o.productId === r.id)!;
+      return {
+        productId: r.id,
+        qty: convertRequirement(offer.product, r.qty, r.unit).qty,
+        salesUnit: offer.product.salesUnit,
+        offerId: offer.id,
+        requiredClaims: [],
+        allergenFree: [],
+      };
+    }),
+  });
+  return { proposal };
+}

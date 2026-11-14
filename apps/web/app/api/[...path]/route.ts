@@ -78,7 +78,7 @@ async function handler(
       { status: 401 },
     );
   const allowed =
-    /^(snapshot|ledger\/verify|catalog\/search|catalog\/[A-Za-z0-9-]+|agents|agents\/[A-Za-z0-9-]+|approvals\/[A-Za-z0-9-]+\/decide|orders\/[A-Za-z0-9-]+\/peppol|demo)$/;
+    /^(snapshot|ledger\/verify|catalog\/search|catalog\/[A-Za-z0-9-]+|agents|agents\/[A-Za-z0-9-]+|approvals\/[A-Za-z0-9-]+\/decide|orders\/[A-Za-z0-9-]+\/peppol|demo|demo\/purchase|voice\/(start|prepare|utterance|end))$/;
   if (!allowed.test(route))
     return NextResponse.json({ message: "Unknown route." }, { status: 404 });
   try {

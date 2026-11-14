@@ -73,6 +73,7 @@ export class GatewayService {
     readonly valio: ValioAdapter,
     readonly signer: Signer,
     readonly now: () => Date = () => new Date(),
+    readonly requireHumanApproval = false,
   ) {}
   async audit(
     type: string,
@@ -339,6 +340,7 @@ export class GatewayService {
         history,
         products: this.catalog.byId,
         now: this.now(),
+        requireHumanApproval: this.requireHumanApproval,
       }),
       offers,
     };
@@ -578,6 +580,7 @@ export class GatewayService {
     decision: Decision,
     approverId: string,
     customerId = DEMO_CUSTOMER,
+    voiceEvidence?: { sessionId: string; transcriptHash: string },
   ) {
     return this.db.transaction(async (repo) => {
       const approval = await repo.get<Approval>("approvals", approvalId);
@@ -685,10 +688,11 @@ export class GatewayService {
         // Decision evidence is persisted in the same transaction before the order.
         approval.decidedAt = this.now().toISOString();
         approval.approverId = approverId;
-        approval.channel = "app";
+        approval.channel = voiceEvidence ? "voice" : "app";
         approval.signature = await this.signer.sign({
           approvalId,
           lineHash: approval.lineHash,
+          ...(voiceEvidence ? { voiceEvidence } : {}),
           decision: decision.decision,
           approverId,
           decidedAt: approval.decidedAt,
@@ -705,6 +709,8 @@ export class GatewayService {
               decision: decision.decision,
               lineHash: approval.lineHash,
               signature: approval.signature,
+              channel: approval.channel,
+              ...(voiceEvidence ? { voiceEvidence } : {}),
             },
           },
           this.now(),
@@ -714,10 +720,11 @@ export class GatewayService {
       }
       approval.decidedAt = this.now().toISOString();
       approval.approverId = approverId;
-      approval.channel = "app";
+      approval.channel = voiceEvidence ? "voice" : "app";
       approval.signature = await this.signer.sign({
         approvalId,
         lineHash: approval.lineHash,
+        ...(voiceEvidence ? { voiceEvidence } : {}),
         decision: decision.decision,
         amendedLines: decision.amendedLines,
         approverId,
@@ -735,6 +742,8 @@ export class GatewayService {
           payload: {
             decision: decision.decision,
             replacementProposalId: approval.replacementProposalId ?? null,
+            channel: approval.channel,
+            ...(voiceEvidence ? { voiceEvidence } : {}),
           },
         },
         this.now(),
@@ -884,6 +893,8 @@ export async function bootstrap(config: Configuration) {
       ? new MockValioClient(scenarios)
       : new LiveValioClient(config.valioBaseUrl, config.valioApiKey),
     new Signer(keys.privateKey, keys.publicKey),
+    () => new Date(),
+    config.demo,
   );
   await db.transaction(async (repo) => {
     const existing = await repo.get<Agent>("agents", DEMO_AGENT);

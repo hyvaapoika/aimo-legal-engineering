@@ -15,9 +15,16 @@ import { GatewayService, DEMO_AGENT, DEMO_CUSTOMER } from "./service.js";
 import type { Configuration } from "./config.js";
 import { handleMcp } from "./mcp.js";
 import { discovery, openapi } from "./openapi.js";
-import { runDemoScenario } from "./scenario.js";
+import { runDemoScenario, runPurchaseDemo } from "./scenario.js";
 
-export function createApp(service: GatewayService, config: Configuration) {
+import { browserVoice, type BrowserVoice } from "./voice/browser.js";
+
+export function createApp(
+  service: GatewayService,
+  config: Configuration,
+  voiceAdapter?: BrowserVoice,
+) {
+  const voice = voiceAdapter ?? browserVoice(service, config.stateDir);
   const app = new Hono<{ Variables: { agent: Agent } }>();
   const limits = new Map<string, { count: number; reset: number }>();
   app.use("*", bodyLimit({ maxSize: 1_000_000 }));
@@ -328,6 +335,49 @@ export function createApp(service: GatewayService, config: Configuration) {
         403,
       );
     return c.json(await runDemoScenario(service));
+  });
+  app.use("/admin/voice/*", async (c, next) => {
+    if (!config.demo)
+      throw new DomainError(
+        "DEMO_DISABLED",
+        "Browser voice approval is limited to the simulated local demo.",
+        403,
+      );
+    await next();
+  });
+  app.post("/admin/voice/start", async (c) => {
+    const { approvalId } = z
+      .object({ approvalId: z.string().uuid() })
+      .strict()
+      .parse(await c.req.json());
+    return c.json(await voice.start(approvalId));
+  });
+  app.post("/admin/voice/prepare", async (c) =>
+    c.json(voice.prepare(await c.req.json())),
+  );
+  app.post("/admin/voice/utterance", async (c) =>
+    c.json(await voice.utterance(await c.req.json())),
+  );
+  app.post("/admin/voice/end", async (c) => {
+    const { sessionId } = z
+      .object({ sessionId: z.string().uuid() })
+      .strict()
+      .parse(await c.req.json());
+    voice.end(sessionId);
+    return c.json({ ok: true });
+  });
+  app.post("/admin/demo/purchase", async (c) => {
+    if (!config.demo)
+      throw new DomainError(
+        "DEMO_DISABLED",
+        "Only available in the local mock demo.",
+        403,
+      );
+    const { idempotencyKey } = z
+      .object({ idempotencyKey: z.string().uuid() })
+      .strict()
+      .parse(await c.req.json());
+    return c.json(await runPurchaseDemo(service, idempotencyKey));
   });
   app.get("/admin/orders/:id/peppol", async (c) => {
     const order = await service.db.transaction((repo) =>

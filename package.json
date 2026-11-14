@@ -25,7 +25,8 @@
     "buyer:review": "tsx apps/buyer-agent/src/review.ts",
     "test:postgres": "tsx scripts/verify-postgres.ts",
     "voice:setup": "tsx scripts/elevenlabs.ts setup",
-    "voice:check": "tsx scripts/elevenlabs.ts check"
+    "voice:check": "tsx scripts/elevenlabs.ts check",
+    "voice:update": "tsx scripts/elevenlabs.ts update"
   },
   "dependencies": {
     "@aimo/catalog": "workspace:*",

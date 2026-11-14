@@ -34,6 +34,20 @@ Scope: local working hackathon application. Hosted provider checks and public de
 
 - Hosted Valio lookup is verified. The full signed offer → proposal → approval → order flow against that backend still needs rehearsal. No authentication bypass or mock fallback is used in hosted mode.
 - Claude and Gemini adapters are implemented/typechecked; paid calls were not made without keys.
-- Voice/SMS are disabled and are not represented as working integrations. The plan explicitly permits the `VOICE_ENABLED=false` path.
+- Telephone/SMS integration remains unconnected. Browser voice implementation and verification are tracked below.
 - Partial auto-placement, vector search, A2A task execution, production SSO, and certified Peppol validation are outside this delivered local demo. See `docs/ASSUMPTIONS.md` for precise behavior and rationale.
-- No public deployment, remote push, real order, payment, email, SMS, or phone call was made.
+- No public deployment, remote push, real supplier order, payment, email, or SMS was made. The authorized Twilio reachability test is recorded above.
+
+## Browser voice approval — 14 November 2026
+
+- Added an interactive milk/butter/yoghurt/peanuts replenishment flow, live progress graph, larger sans-serif UI, responsive quotation and voice panels, and a live conversation transcript.
+- Local demo quotations now always require explicit human approval, including low-value orders and amended proposals. The legacy CLI scenario asserts this requirement too.
+- Added authenticated, mock-only browser voice session endpoints and a deterministic two-turn approval/rejection grammar. Atomic decisions retain stock, expiry, signature, mandate and revision checks. The model has no approval tool.
+- Updated the private ElevenLabs agent successfully through the real provider SDK. WebRTC connected; user speech was transcribed and contextual responses named the correct four products and €110.82 total. Initial audio playback failed; enabling audio events and disabling provider-default hold queue fixed the connection path. The user held a live conversation and rejected the quotation by voice; the UI and ledger recorded rejection and no order was placed. A live spoken approval-to-order remains unexercised; automated tests cover it.
+- `pnpm check`: 84 tests passed, including 15 voice boundary tests, followed by the isolated purchasing demo and ledger verification. `pnpm build`: passed again after the audio and queue fixes.
+- Physical-phone HTTPS access, Telnyx activation/integration, PSTN/WhatsApp/Telegram calling and production voice identity verification are not complete. No new paid account upgrade or telephone call was made.
+
+### Natural conversation refinement
+
+- Removed mandatory recitation. Common natural requests and confirmations are accepted; model intent can prepare a confirmation for other wording but cannot commit a decision. A read-only status tool synchronizes the agent with the actual gateway result.
+- Rewrote the prompt for brief, conversational answers, interruptions, and normal confirmation questions. Selected Eleven v4 Turbo expressive voice, normal turn-taking, and a shorter response budget. The real provider readback confirms `eleven_v4_turbo`, expressive mode enabled, queueing disabled, and both advisory/read-only client tools attached. Final `pnpm check` passed all **91 tests** and the isolated demo; `pnpm build` passed. Human assessment of the revised voice and natural intent path is still outstanding.

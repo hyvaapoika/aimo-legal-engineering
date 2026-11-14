@@ -15,7 +15,8 @@ const service = await bootstrap({
 });
 try {
   const result = await runDemoScenario(service);
-  assert.equal(result.auto.status, "placed");
+  assert.equal(result.auto.status, "held");
+  assert.equal(result.auto.orderId, undefined);
   assert.equal(result.held.status, "held");
   assert.equal(result.blocked.status, "refused");
   console.log("Catalog:", service.catalog.products.length, "supplied products");
@@ -29,7 +30,7 @@ try {
       )
       .join("; "),
   );
-  console.log("AUTO:", result.auto.orderId);
+  console.log("MANDATORY HUMAN APPROVAL:", result.auto.approvalId);
   console.log(
     "HOLD:",
     result.held.verdict.firedRules.map((r) => r.id).join(", "),
@@ -62,7 +63,7 @@ try {
     JSON.stringify(
       {
         at: new Date().toISOString(),
-        auto: result.auto.orderId,
+        awaitingHuman: result.auto.approvalId,
         approved: decided.proposal.orderId,
         refused: result.blocked.id,
         ledger: verified,

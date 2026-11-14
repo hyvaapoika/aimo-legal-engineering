@@ -40,6 +40,7 @@ import { ApprovalCard } from "./components/approval-card";
 import { AgentDrawer } from "./components/agent-drawer";
 import { CatalogView } from "./components/catalog-view";
 import { DiscoveryContent } from "./components/discovery-content";
+import { PurchaseFlow } from "./components/purchase-flow";
 const nav: { id: View; name: string; icon: typeof ShieldCheck }[] = [
   { id: "overview", name: "Overview", icon: LayoutDashboard },
   { id: "approvals", name: "Approval inbox", icon: ClipboardList },
@@ -50,6 +51,7 @@ const nav: { id: View; name: string; icon: typeof ShieldCheck }[] = [
   { id: "discovery", name: "Developer access", icon: Code2 },
 ];
 export default function Dashboard({ demo }: { demo: boolean }) {
+  const [runSignal, setRunSignal] = useState(0);
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const [auth, setAuth] = useState(false);
   const [token, setToken] = useState("");
@@ -131,11 +133,10 @@ export default function Dashboard({ demo }: { demo: boolean }) {
     setMenu(false);
     setSelectedOrder(undefined);
   };
-  const runDemo = () =>
-    act(
-      () => api("demo", {}),
-      "Demo ready: an automatic order, two approval cases, and a refused attempt.",
-    );
+  const runDemo = () => {
+    setView("overview");
+    setRunSignal((n) => n + 1);
+  };
 
   if (!auth)
     return (
@@ -304,9 +305,11 @@ export default function Dashboard({ demo }: { demo: boolean }) {
             <>
               <div className="page-heading">
                 <div>
-                  <span className="eyebrow">AUTHORITY, MADE VISIBLE</span>
-                  <h1>Your agents. Your rules.</h1>
-                  <p>A clear view of what’s moving, and what needs you.</p>
+                  <span className="eyebrow">PURCHASING CONTROL</span>
+                  <h1>Purchasing, with you in control.</h1>
+                  <p>
+                    Review quotations, talk to Aimo, and approve the next order.
+                  </p>
                 </div>
                 {demo && (
                   <button
@@ -318,13 +321,21 @@ export default function Dashboard({ demo }: { demo: boolean }) {
                   </button>
                 )}
               </div>
+              {demo && (
+                <PurchaseFlow
+                  snapshot={snapshot}
+                  products={products}
+                  refresh={refresh}
+                  runSignal={runSignal}
+                />
+              )}
               <div className="stats-strip">
                 <div>
                   <span>Awaiting your decision</span>
                   <strong className="amber">
                     {String(pending.length).padStart(2, "0")}
                   </strong>
-                  <small>Exceptions held for review</small>
+                  <small>Quotations held for human review</small>
                 </div>
                 <div>
                   <span>Orders placed</span>
@@ -346,7 +357,7 @@ export default function Dashboard({ demo }: { demo: boolean }) {
               </div>
               <div className="section-heading">
                 <h2>
-                  Needs your attention{" "}
+                  Awaiting approval{" "}
                   <span className="tiny-count">{pending.length}</span>
                 </h2>
                 <button className="text-button" onClick={() => go("approvals")}>
@@ -375,12 +386,12 @@ export default function Dashboard({ demo }: { demo: boolean }) {
                         onClick={() => void runDemo()}
                         disabled={busy}
                       >
-                        Run the reference scenario <ArrowRight size={16} />
+                        Start a purchase <ArrowRight size={16} />
                       </button>
                     ) : undefined
                   }
                 >
-                  Your inbox is clear. Agents will bring exceptions here.
+                  No quotations are waiting for approval.
                 </Empty>
               )}
               <div className="lower-columns">

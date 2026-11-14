@@ -19,6 +19,7 @@ export type EvaluationContext = {
   history: Order[];
   products: Map<string, Product>;
   now: Date;
+  requireHumanApproval?: boolean;
 };
 export function evaluate(ctx: EvaluationContext): Verdict {
   const { input, agent, now, history } = ctx;
@@ -57,6 +58,13 @@ export function evaluate(ctx: EvaluationContext): Verdict {
       "REFUSE",
       "DUPLICATE_PRODUCT",
       "Combine repeated products into one line so stock checks cover the full quantity.",
+    );
+  if (ctx.requireHumanApproval)
+    add(
+      "POL_HUMAN_APPROVAL",
+      "HOLD",
+      "HUMAN_APPROVAL_REQUIRED",
+      "Every quotation in this demo requires explicit human approval.",
     );
   let totalCents = 0;
   for (const line of input.lines) {

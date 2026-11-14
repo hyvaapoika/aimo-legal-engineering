@@ -1,3 +1,18 @@
+# Live browser voice demo
+
+1. Run `pnpm dev` and open http://localhost:3100 on this computer. Enter the local demo workspace.
+2. Click **Start purchase demo**. Watch catalog lookup and quotation creation. The small four-product request requires human approval; no order is auto-placed.
+3. Click **Talk to Aimo** and allow microphone access. Use one call tab at a time. Audio uses the configured ElevenLabs account credits; it does not use Twilio or Telnyx.
+4. Ask about the total, product quantities or requested delivery date. Prices/stock and order placement are simulated. Do not claim supplier fulfillment.
+5. Speak normally: **“Go ahead and place the order”** or **“Just cancel it.”** Aimo asks one short confirmation question; answer naturally, such as **“Yeah, go ahead”** or **“Yes, cancel it.”** Questions or conditions instead of confirmation keep it pending. Confirmation expires after 30 seconds.
+6. Verify the order appears and the graph completes. Check the activity ledger for human voice decision evidence. Ending a call or losing a connection leaves the quotation pending.
+
+A physical phone needs a trusted HTTPS URL; a local network HTTP IP address cannot access the microphone. Public hosting is not configured. Browser voice does not create an incoming phone ring.
+
+For provider configuration use `pnpm voice:update`; secrets stay in ignored `.env.local`. `pnpm voice:check` checks configuration, not a conversational audio test.
+
+---
+
 # Presentation walkthrough
 
 1. Run `pnpm dev`, open `http://localhost:3100`, and enter the local demo workspace.

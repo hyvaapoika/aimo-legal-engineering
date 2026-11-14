@@ -12,8 +12,10 @@ const agentState = z.object({ agentId: z.string().min(1) });
 
 async function main() {
   const command = process.argv[2];
-  if (command !== "setup" && command !== "check") {
-    throw new Error("Usage: pnpm voice:setup or pnpm voice:check");
+  if (command !== "setup" && command !== "check" && command !== "update") {
+    throw new Error(
+      "Usage: pnpm voice:setup, pnpm voice:check or pnpm voice:update",
+    );
   }
   const client = elevenLabsClient();
   let saved: z.infer<typeof agentState> | undefined;
@@ -38,6 +40,12 @@ async function main() {
     });
   }
 
+  if (command === "update")
+    await client.conversationalAi.agents.update(
+      saved.agentId,
+      quotationAgentConfiguration,
+    );
+
   const agent = await client.conversationalAi.agents.get(saved.agentId);
   console.log(
     JSON.stringify(
@@ -49,7 +57,7 @@ async function main() {
         authenticationRequired: agent.platformSettings?.auth?.enableAuth,
         dashboard: `https://elevenlabs.io/app/agents/agents/${saved.agentId}`,
         stateFile: fileURLToPath(stateFile),
-        approvalIntegration: "not_connected",
+        approvalIntegration: "browser_demo_two_step_confirmation",
         telephoneIntegration: "not_connected",
         callPlaced: false,
       },
