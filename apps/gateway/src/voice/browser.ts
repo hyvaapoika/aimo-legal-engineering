@@ -49,10 +49,18 @@ export function spokenCommand(text: string) {
     )
   )
     return undefined;
+  // A natural confirmation can restate rejection after a positive acknowledgement.
+  // "Yeah, go ahead. I'm not approving this" confirms cancellation, not purchase.
+  if (
+    /^(?:(?:yeah|yes|yep|okay|ok|sure|well|go ahead|just) )*(?:i'm not approving|i am not approving|i don't approve|i do not approve|let's not approve|let us not approve) (?:this|that|it|this quotation|the quotation|this order|the order)$/.test(
+      normalized,
+    )
+  )
+    return "reject" as const;
   if (normalized === "confirm approval") return "confirm_approve" as const;
   if (normalized === "confirm rejection") return "confirm_reject" as const;
   if (
-    /^(yes|yeah|yep|yup|sure|okay|ok|absolutely|correct|that's right|that is right|go ahead|do it|please do|sounds good|that's fine)( (yes|yeah|sure|okay|ok|please|go ahead|do it|please do|that's right|thanks|thank you))*$/.test(
+    /^(yes|yeah|yep|yup|sure|okay|ok|absolutely|correct|that's right|that is right|go ahead|go for it|do it|do that|just do it|please do|sounds good|that's fine)( (yes|yeah|sure|okay|ok|please|just|go ahead|go for it|do it|do that|please do|that's right|thanks|thank you))*$/.test(
       normalized,
     )
   )

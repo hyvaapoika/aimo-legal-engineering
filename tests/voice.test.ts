@@ -70,7 +70,6 @@ describe("deterministic browser voice approval", () => {
   });
   it.each([
     "I approve this quotation?",
-    "I do not approve this quotation",
     "If it arrives tomorrow, I approve this quotation",
     "Say I approve this quotation",
     '"I approve this quotation"',
@@ -97,6 +96,8 @@ describe("deterministic browser voice approval", () => {
     ["Yeah, whatever, just reject it.", "Yeah, cancel it.", "rejected"],
     ["No, don't approve it.", "Yes, please.", "rejected"],
     ["Cancel it please", "Please do", "rejected"],
+    ["Cancel it please", "Yeah, go ahead. I'm not approving this.", "rejected"],
+    ["Approve it", "Yeah, just do it", "approved"],
     ["Go ahead and place the order", "Yeah, go ahead", "approved"],
     ["Approve it", "Sounds good", "approved"],
   ])(

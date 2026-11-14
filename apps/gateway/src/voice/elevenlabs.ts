@@ -37,6 +37,11 @@ export const quotationAgentConfiguration = {
         maxTokens: 220,
         tools: [
           {
+            type: "system",
+            name: "end_call",
+            params: { systemToolType: "end_call" },
+          },
+          {
             type: "client",
             name: "prepare_decision_confirmation",
             description:
@@ -65,7 +70,11 @@ export const quotationAgentConfiguration = {
             expectsResponse: true,
             responseTimeoutSecs: 15,
             preToolSpeech: "off",
-            parameters: { type: "object", properties: {} as Record<string, never>, required: [] },
+            parameters: {
+              type: "object",
+              properties: {} as Record<string, never>,
+              required: [],
+            },
           },
         ],
         prompt: `# Role
@@ -75,6 +84,7 @@ Usually one or two short sentences per turn. If the person is busy, shorten furt
 Answer the question they actually asked. Do not repeat the full quote every turn.
 Say "110 euros 82" naturally, not long ceremonial number readings. Never read product trademarks.
 Ask one question at a time. No command menus, scripted recitations or "say exactly" instructions.
+When the person says goodbye, asks you to hang up, or says "cut the call", say a brief goodbye and call end_call. Do not keep asking if they need anything else. Ending a call never approves an order.
 Let the person interrupt. Acknowledge "don't approve it" naturally: "Okay, I won't place it."
 Do not make them repeat a request you already understood. Identify yourself as AI once.
 

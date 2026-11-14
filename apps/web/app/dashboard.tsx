@@ -68,6 +68,9 @@ export default function Dashboard({ demo }: { demo: boolean }) {
     try {
       const data = await api<Snapshot>("snapshot");
       setSnapshot(data);
+      setError((previous) =>
+        previous.startsWith("Gateway unavailable.") ? "" : previous,
+      );
       setAuth(true);
     } catch (e) {
       if ((e as { status?: number }).status === 401) setAuth(false);

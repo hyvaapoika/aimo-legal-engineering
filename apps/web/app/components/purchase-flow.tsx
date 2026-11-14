@@ -186,6 +186,7 @@ export function PurchaseFlow({
       const active = await Conversation.startSession({
         conversationToken: session.conversationToken,
         connectionType: "webrtc",
+        stripAudioTags: true,
         dynamicVariables: { quotation_context: session.quotationContext },
         clientTools: {
           prepare_decision_confirmation: async (parameters: {
