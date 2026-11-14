@@ -5,11 +5,11 @@ Open http://localhost:3100/agent with `pnpm dev` running. This local buyer works
 ## Changing lunch menu
 
 1. Select Lunch kitchen. Open Kitchen preferences, review requirements and budget, and save. Starter preferences are examples, not learned purchase history.
-2. Enter “Tomato and basil pasta for 80 people. We already have 5 kg of fresh pasta.” Choose a delivery date and prepare.
+2. Enter “Tomato and basil pasta for 80 people. We already have 5 kg of fresh pasta.” Include delivery in the prompt, such as “on Monday” or “delivery 2026-11-18”, and prepare.
 3. Watch the actual workflow: preferences, interpretation, sourced recipe scaling, catalogue matching, offers, kitchen rules, review.
 4. The sourced recipe needs 6.4 kg pasta; confirmed pantry stock reduces the purchase requirement to 1.4 kg. Pack rounding uses verified supplier contents.
 5. Review the attention rows. Basil and pepper have no published quantities, and the selected cheese lacks a verified conversion. Choose explicit sales-pack quantities instead of accepting invented amounts.
-6. Edit menu & quantities to change 80 to 120, or enter a follow-up request and prepare again. Verify the revised requirement before using the basket.
+6. Edit menu to change 80 to 120, or enter a follow-up request and prepare again. Verify the revised requirement before using the basket.
 7. Use this basket replaces the current basket with Undo available. Request human approval through the existing basket flow.
 
 A menu photograph or a short voice note can provide the same request. Attachments are sent to the configured Gemini service only on Prepare; raw media is not persisted in the purchase plan. Speak records up to 30 seconds and can be stopped or removed before submission. This is voice-note input, not a telephone call or continuous voice session.
@@ -31,3 +31,7 @@ A menu photograph or a short voice note can provide the same request. Attachment
 - Jobs run in the gateway process. An interrupted job becomes retryable after two minutes; this is not a durable distributed worker.
 - The buyer proxy remains localhost-only and disabled in production. Production customer authentication and real supplier fulfilment need separate integration.
 - Live verification used typed hotel input and synthetic image/WAV lunch fixtures with Gemini. The physical microphone capture/permission path has not been tested. Prices, stock and order outcomes in these tests were mock data. No telephone call, real order or payment was made.
+
+## Compact workspace update
+
+The main view now uses a short heading, smaller composer and joined ingredient rows. Workflow details and recipe sources are collapsed; the repeated onboarding and summary copy was removed. Delivery has no separate input. Typed ISO dates, Finnish day.month.year dates, English weekdays, today and tomorrow are resolved deterministically in Helsinki time before querying offers. Ambiguous/conflicting dates are rejected. If no date is included, the existing default or prior plan date is retained and shown in the review. Dates only inside an attachment are not extracted by this resolver; include delivery in the accompanying text. Browsing previous orders by calendar week is not currently an agent tool.

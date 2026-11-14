@@ -12,6 +12,13 @@
 
 Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
+## Compact agent workspace — 14 November 2026
+
+- Removed the marketing header, onboarding blocks, date picker, revision badge and repeated summaries. Reduced composer/card spacing, joined ingredient rows and collapsed workflow/source detail.
+- Delivery moves into the text prompt. A deterministic Helsinki-time resolver checks explicit/relative dates before requesting supplier offers; invalid, past, conflicting and recognized unsupported expressions are rejected. The resolved delivery date remains visible in review.
+- Browser verification: “pasta for 80 on Tuesday” displayed Tuesday 17 November; the date input was absent and the new compact layout rendered. Desktop/mobile DOM checks found no horizontal overflow. Screenshot: `.local/agent-compact.png`. No real supplier order was placed.
+- `pnpm check` passed 167 tests and the purchasing demo; `pnpm build` passed.
+
 ## Kitchen purchasing agent — 14 November 2026
 
 - Added `/agent` with persistent editable kitchen preferences, text/menu-photo/voice-note input, actual tool progress, an editable interpretation and an attention-first review. Saved lunch/hotel starter profiles are explicit examples, not inferred history.

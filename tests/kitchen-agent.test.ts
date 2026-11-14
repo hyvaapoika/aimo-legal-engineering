@@ -379,6 +379,22 @@ describe("bounded kitchen purchasing agent", () => {
       ).budgetPerPortion,
     ).toBe(3);
   });
+  it("uses the prompt delivery date for the plan and every supplier offer", async () => {
+    intent = meal();
+    await saved("lunch");
+    const task = await engine.start(ctx.agent, {
+      profileId: "lunch",
+      text: "Tomato pasta for 80 on Tuesday",
+      date: delivery,
+      key: randomUUID(),
+    });
+    const p = await settled(task.id);
+    expect(p.date).toBe("2026-11-17");
+    expect(Object.values(p.offers).length).toBeGreaterThan(0);
+    expect(
+      Object.values(p.offers).every((o) => o.requestedDate === "2026-11-17"),
+    ).toBe(true);
+  });
   it("keeps unsupported voice/photo inputs explicit when the local fallback is used", async () => {
     const profile = await saved("lunch");
     const p = localInterpret(

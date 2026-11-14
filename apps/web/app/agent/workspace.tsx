@@ -218,6 +218,7 @@ export default function KitchenWorkspace() {
         ...(media ? { media } : {}),
       });
       accept(p);
+      setDate(p.date);
       setEditing(false);
       setMedia(undefined);
       setMediaLabel("");
@@ -366,23 +367,15 @@ export default function KitchenWorkspace() {
         <Link href="/">
           <ArrowLeft size={16} /> Shop
         </Link>
-        <span>Your purchasing assistant</span>
       </header>
       <main className="a-main">
         <div className="a-title">
-          <div>
-            <span className="a-eyebrow">AIMO FOR YOUR KITCHEN</span>
-            <h1>From your menu to your next order.</h1>
-            <p>
-              Tell us what’s changing. We’ll prepare the products and highlight
-              the decisions.
-            </p>
-          </div>
+          <h1>Plan your order</h1>
           <button
             className="a-secondary"
             onClick={() => setPreferences(!preferences)}
           >
-            <Settings2 size={17} /> Kitchen preferences
+            <Settings2 size={16} /> Preferences
           </button>
         </div>
         {error && (
@@ -419,23 +412,7 @@ export default function KitchenWorkspace() {
               <option value="hotel">Hotel breakfast</option>
             </select>
           </label>
-          <label>
-            Delivery
-            <input
-              aria-label="Requested delivery"
-              type="date"
-              value={date}
-              disabled={running}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </label>
-          {profile?.revision ? (
-            <span>
-              <Check size={14} /> Preferences saved · v{profile.revision}
-            </span>
-          ) : (
-            <span>One-time setup: review and save your preferences</span>
-          )}
+          {!profile?.revision && <span>Save your preferences to start</span>}
         </div>
         {preferences && profile && (
           <section className="a-profile">
@@ -648,17 +625,18 @@ export default function KitchenWorkspace() {
           </section>
         )}
         <section className="a-request">
-          <label htmlFor="agent-request">
-            What do you need for the kitchen?
+          <label className="a-sr-only" htmlFor="agent-request">
+            Your menu or order
           </label>
           <textarea
             id="agent-request"
+            rows={2}
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={
               profile?.id === "hotel"
-                ? "Prepare our usual breakfast order. Use our approved alternatives if needed."
-                : "Tomato & basil pasta for 80 people. I already have 5 kg of fresh pasta."
+                ? "Our usual breakfast order for Monday."
+                : "Pasta for 80 on Monday. We have 5 kg of fresh pasta."
             }
           />
           <div className="a-request-actions">
@@ -719,7 +697,7 @@ export default function KitchenWorkspace() {
               ) : (
                 <ArrowRight size={17} />
               )}{" "}
-              Prepare my basket
+              Prepare basket
             </button>
           </div>
           <div className="a-request-hints">
@@ -728,14 +706,14 @@ export default function KitchenWorkspace() {
               onClick={() =>
                 setText(
                   profile?.id === "hotel"
-                    ? "Prepare our usual breakfast order, checking approved alternatives for unavailable products."
-                    : "Tomato and basil pasta for 80 people. I already have 5 kg of fresh pasta.",
+                    ? "Prepare our usual breakfast order for Monday, using approved alternatives if needed."
+                    : "Tomato and basil pasta for 80 on Monday. I already have 5 kg of fresh pasta.",
                 )
               }
             >
               {profile?.id === "hotel"
-                ? "Check the usual breakfast order"
-                : "Lunch for 80, using pantry stock"}
+                ? "Try: usual breakfast for Monday"
+                : "Try: pasta for 80 on Monday"}
             </button>
             {media && (
               <small>
@@ -747,35 +725,56 @@ export default function KitchenWorkspace() {
         </section>
         {plan && (
           <>
-            <section className="a-progress" aria-label="Agent progress">
-              {plan.events.map((event, index) => (
-                <div key={`${event.tool}-${index}`} className={event.state}>
-                  {event.state === "done" ? (
-                    <Check size={16} />
-                  ) : (
-                    <LoaderCircle className="spin" size={16} />
-                  )}
-                  <span>{event.label}</span>
-                </div>
-              ))}
-              {plan.status === "failed" && <p role="alert">{plan.error}</p>}
-            </section>
+            <details className="a-progress" aria-label="Agent progress">
+              <summary aria-live="polite">
+                {plan.status === "working" ? (
+                  <LoaderCircle className="spin" size={15} />
+                ) : (
+                  <Check size={15} />
+                )}
+                {plan.status === "working"
+                  ? plan.stage
+                  : plan.status === "failed"
+                    ? "Preparation interrupted"
+                    : "Preparation complete"}
+                <ChevronDown size={14} />
+              </summary>
+              <div className="a-progress-steps">
+                {plan.events.map((event, index) => (
+                  <div key={`${event.tool}-${index}`} className={event.state}>
+                    {event.state === "done" ? (
+                      <Check size={14} />
+                    ) : (
+                      <LoaderCircle className="spin" size={14} />
+                    )}
+                    <span>{event.label}</span>
+                  </div>
+                ))}
+              </div>
+            </details>
+            {plan.status === "failed" && (
+              <p className="a-error" role="alert">
+                {plan.error}
+              </p>
+            )}
             {plan.status === "ready" && plan.intent && (
               <section className="a-review">
                 <div className="a-review-title">
                   <div>
-                    <span className="a-eyebrow">
-                      YOUR PREPARED BASKET · REVISION {plan.revision}
-                    </span>
                     <h2>
                       {attention.length + plan.issues.length
-                        ? `${attention.length + plan.issues.length} decisions need your attention`
-                        : "Your basket is ready to review"}
+                        ? `${attention.length + plan.issues.length} to review`
+                        : "Ready to order"}
                     </h2>
                     <p>
-                      {ready.length} ingredients ready ·{" "}
-                      {plan.rows.filter((r) => r.status === "covered").length}{" "}
-                      covered by your pantry
+                      Delivery{" "}
+                      {new Intl.DateTimeFormat("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        weekday: "short",
+                        timeZone: "UTC",
+                      }).format(new Date(`${plan.date}T12:00:00Z`))}
+                      {plan.portions > 0 ? ` · ${plan.portions} portions` : ""}
                       {plan.interpretation === "local"
                         ? " · Local interpretation"
                         : ""}
@@ -789,7 +788,7 @@ export default function KitchenWorkspace() {
                       setEditing(!editing);
                     }}
                   >
-                    Edit menu & quantities <ChevronDown size={15} />
+                    Edit menu <ChevronDown size={15} />
                   </button>
                 </div>
                 {editing && draft && (
@@ -1152,12 +1151,6 @@ export default function KitchenWorkspace() {
                     products or kitchen preference before proceeding.
                   </p>
                 )}
-                {date !== plan.date && (
-                  <p className="a-attention">
-                    Delivery date changed. Prepare the request again to check
-                    that date.
-                  </p>
-                )}
                 {profile && profile.revision !== plan.profileRevision && (
                   <p className="a-attention">
                     Kitchen preferences changed. Edit the menu and recalculate
@@ -1199,12 +1192,12 @@ export default function KitchenWorkspace() {
                                 <h3>{row.ingredient}</h3>
                                 <small>
                                   {row.required === null
-                                    ? "Quantity needs your choice"
+                                    ? null
                                     : `${Number(row.required.toFixed(3))} ${row.unit === "sales" ? "sales packs" : row.unit.toLowerCase()} needed`}
                                   {row.pantryUsed > 0
                                     ? ` · ${row.pantryUsed} kg from your pantry`
                                     : ""}
-                                  {row.exact ? " · Exact product only" : ""}
+                                  {row.exact ? " · Exact choice" : ""}
                                 </small>
                               </div>
                               {row.status === "covered" ? (
@@ -1246,16 +1239,16 @@ export default function KitchenWorkspace() {
                                           value={c.product.id}
                                         >
                                           {productName(c.product)}
-                                          {c.issue ? ` — ${c.issue}` : ""}
+                                          {c.issue &&
+                                          c.product.id !== row.selectedId
+                                            ? ` — ${c.issue}`
+                                            : ""}
                                         </option>
                                       ))}
                                     </select>
                                     {selected && (
                                       <small>
-                                        {packText(selected.product)} ·{" "}
-                                        {swapped
-                                          ? "Approved kitchen alternative"
-                                          : selected.reason}
+                                        {packText(selected.product)}
                                       </small>
                                     )}
                                     {swapped && (
@@ -1265,13 +1258,12 @@ export default function KitchenWorkspace() {
                                             c.product.id === row.preferredId,
                                         )?.issue ||
                                           "Preferred product replaced"}
-                                        . Approved kitchen alternative; review
-                                        before using the basket.
+                                        . Using your approved alternative.
                                       </span>
                                     )}
                                   </div>
                                   <label>
-                                    Sales packs
+                                    Packs
                                     <input
                                       key={`${plan.revision}-${row.id}`}
                                       aria-label={`Sales packs for ${row.ingredient}`}
@@ -1284,7 +1276,7 @@ export default function KitchenWorkspace() {
                                       }
                                       defaultValue={selected?.qty ?? ""}
                                       disabled={busy || !selected}
-                                      placeholder="Choose"
+                                      placeholder="—"
                                       onBlur={(e) => {
                                         const value = e.target.value
                                           ? Number(e.target.value)
@@ -1305,9 +1297,14 @@ export default function KitchenWorkspace() {
                                 </div>
                                 {row.issue && (
                                   <p className="a-row-issue">
-                                    {row.issue}
+                                    {row.issue ===
+                                    "Choose a pack quantity; conversion is unconfirmed"
+                                      ? row.required === null
+                                        ? "Choose packs for this ingredient."
+                                        : "Pack contents unverified. Confirm quantity."
+                                      : row.issue}
                                     {row.pantryUnknown
-                                      ? " in Edit menu & quantities."
+                                      ? " — edit menu to confirm."
                                       : ""}
                                   </p>
                                 )}
@@ -1318,16 +1315,6 @@ export default function KitchenWorkspace() {
                                 )}
                               </>
                             )}
-                            {row.source && (
-                              <a
-                                className="a-source"
-                                href={row.source}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Source recipe: {row.recipe}
-                              </a>
-                            )}
                           </article>
                         );
                       })}
@@ -1335,9 +1322,7 @@ export default function KitchenWorkspace() {
                   </div>
                   <aside className="a-total">
                     <span>
-                      {attention.length
-                        ? "Known-price subtotal"
-                        : "Prepared basket total"}
+                      {attention.length ? "Subtotal" : "Basket total"}
                     </span>
                     <strong>{money(plan.totalCents / 100)}</strong>
                     {plan.costPerPortion !== null && (
@@ -1349,11 +1334,6 @@ export default function KitchenWorkspace() {
                     <small>
                       Excl. VAT{source !== "valio" ? " · Sample prices" : ""}
                     </small>
-                    <div>
-                      {ready.length} ingredients ready
-                      <br />
-                      {attention.length} need a decision
-                    </div>
                     <button
                       className="a-primary"
                       disabled={
@@ -1362,51 +1342,43 @@ export default function KitchenWorkspace() {
                         plan.issues.length > 0 ||
                         plan.budgetExceeded ||
                         !ready.length ||
-                        profile?.revision !== plan.profileRevision ||
-                        date !== plan.date
+                        profile?.revision !== plan.profileRevision
                       }
                       onClick={useBasket}
                     >
                       Use this basket <ArrowRight size={16} />
                     </button>
+                    {plan.rows.some((row) => row.source) && (
+                      <details className="a-row-details">
+                        <summary>Recipe sources</summary>
+                        {[
+                          ...new Map(
+                            plan.rows
+                              .filter((row) => row.source)
+                              .map((row) => [row.source!, row.recipe]),
+                          ).entries(),
+                        ].map(([url, title]) => (
+                          <a
+                            key={url}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {title} ↗
+                          </a>
+                        ))}
+                      </details>
+                    )}
                     <p className="a-small">
-                      Replaces your current basket. Undo is available.
-                      Purchasing still requires human approval.
+                      Replaces basket · Undo available.
+                      <br />
+                      Human approval required.
                     </p>
-                    <button
-                      className="a-secondary"
-                      disabled={busy}
-                      onClick={() => {
-                        setDraft(clone(plan.intent!));
-                        setEditing(true);
-                      }}
-                    >
-                      Adjust menu or pantry
-                    </button>
                   </aside>
                 </div>
               </section>
             )}
           </>
-        )}
-        {!plan && (
-          <div className="a-empty-guide">
-            <div>
-              <span>01</span>
-              <h3>Tell us the plan</h3>
-              <p>Use a menu, a voice note or your usual order.</p>
-            </div>
-            <div>
-              <span>02</span>
-              <h3>We do the preparation</h3>
-              <p>Recipes, packs, preferred products and availability.</p>
-            </div>
-            <div>
-              <span>03</span>
-              <h3>Review the decisions</h3>
-              <p>See what changed, then use the prepared basket.</p>
-            </div>
-          </div>
         )}
       </main>
     </div>

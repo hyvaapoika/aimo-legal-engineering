@@ -2,6 +2,8 @@
 
 ## Current kitchen purchasing agent
 
+Delivery is entered in the prompt and resolved by a bounded deterministic parser (ISO, Finnish numeric date, English weekday or relative day), then shown in the review. No date retains the existing default/prior date. Unsupported or conflicting recognized expressions need clarification. Attachment-only delivery dates and conversational weekly order-history lookup are not implemented.
+
 `/agent` adds persisted kitchen profiles and owned purchase plans to the existing local webshop. Gemini text/image/audio interpretation is advisory and strictly validated; a bounded deterministic workflow handles recipe quantities, claims, offers, substitutions, budgets and export. It cannot approve or place orders. Exact/approved kitchen choices persist into cart suggestions, while existing server mandates and human approval remain authoritative.
 
 The two starter kitchens are editable examples under the demo customer, not connected restaurant accounts or learned history. Only three reviewed recipes are installed. Unknown recipes, amounts, pack conversions and stock are not invented. Pantry is supplied by the chef, not an inventory feed. No live menu crawler, replenishment scheduler, learned purchasing model or autonomous sales outreach exists.

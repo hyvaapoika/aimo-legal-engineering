@@ -1,3 +1,4 @@
+import { deliveryFromPrompt } from "../../../../packages/purchasing/src/delivery";
 import { randomUUID } from "node:crypto";
 import { Decimal } from "decimal.js";
 import { z } from "zod";
@@ -233,6 +234,11 @@ export class KitchenAgent {
     const prior = input.previousId
       ? await this.get(agent, input.previousId)
       : null;
+    const resolvedDate = deliveryFromPrompt(
+      input.text,
+      input.date,
+      this.service.now(),
+    );
     const fingerprint = sha256(canonical(input));
     const plan: PurchasePlan = {
       id: randomUUID(),
@@ -246,7 +252,7 @@ export class KitchenAgent {
       profile,
       revision: 1,
       text: input.text,
-      date: input.date,
+      date: resolvedDate,
       inputKind: input.media
         ? input.media.mimeType.startsWith("image")
           ? "photo"
@@ -306,7 +312,7 @@ export class KitchenAgent {
         input.media ? "Reading your attachment" : "Understanding your request",
       );
       const interpreted = await this.interpret(
-        input,
+        { ...input, date: resolvedDate },
         profile,
         prior?.intent ?? null,
       );
