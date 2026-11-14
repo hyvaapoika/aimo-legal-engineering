@@ -351,7 +351,7 @@ export default function Store() {
         throw new Error("Invalid prepared basket");
       changeCart(
         lines,
-        "Prepared basket added. Review it before requesting human approval.",
+        "Prepared basket added. Review it before ordering.",
       );
       setDate(incoming.date);
       setView({ kind: "cart" });
@@ -1542,7 +1542,7 @@ export default function Store() {
                     </>
                   ) : (
                     <>
-                      Request human approval <ArrowRight size={17} />
+                      Order <ArrowRight size={17} />
                     </>
                   )}
                 </button>
