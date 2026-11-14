@@ -1,6 +1,6 @@
 # Live voice approval: researched integration plan
 
-Status: researched, not implemented or call-tested. Existing voice support remains disabled. This document records the user's new requirements; it does not claim that the current application meets them.
+Status: researched; one Twilio template call attempted, returned busy without a connected conversation. Quotation voice approval is not implemented or call-tested. Existing application voice support remains disabled. This document records the user's new requirements; it does not claim that the current application meets them.
 
 ## Confirmed product requirements
 
@@ -9,7 +9,7 @@ Status: researched, not implemented or call-tested. Existing voice support remai
 - The supplier gateway builds the quotation, calls the registered restaurant approver, answers questions, requests explicit confirmation, and creates the simulated order only after approval.
 - The dashboard shows actual progress through request, lookup, quotation, approval call, decision, and order creation.
 - Increase text size, reduce explanatory copy, replace the current editorial/serif appearance with a clear operational interface, and make the live flow the primary screen.
-- The user is in Finland, will receive calls on a personal Finnish number, has ElevenLabs but no Twilio account, and wants English with no PIN for this simulated demo. Restrict demo calling to the configured recipient; this mode does not establish production-grade approver identity.
+- The user is in Finland, will receive calls on a personal Finnish number, has ElevenLabs and has now created a Twilio trial account, and wants English with no PIN for this simulated demo. Restrict demo calling to the configured recipient; this mode does not establish production-grade approver identity.
 
 ## Recommended first integration
 
@@ -64,7 +64,9 @@ UI direction: 16–18px primary text; readable status labels; sans-serif heading
 6. Trust tests: unconfigured recipient, expired/revised quotation, forged or duplicated provider requests, duplicate start clicks, and concurrent app/phone decisions.
 7. Full rehearsal: restaurant inventory trigger → catalogue → hosted Valio lookup → quotation → phone approval → simulated order, with visible progress throughout.
 
-Current local state: no ElevenLabs key/agent/phone-number ID or Twilio credentials are configured. No voice test has been performed. Twilio's current trial guide limits verified destinations and custom call behavior; do not assume a trial can run this integration. [Voice trial guide](https://www.twilio.com/docs/usage/trials/try-out-voice).
+Current local state: Twilio credentials, caller number, and demo recipient are configured only in ignored `.env`. No ElevenLabs key/agent/phone-number ID is configured. The user-supplied Twilio speech-recognition template request returned HTTP 201; the call subsequently ended with status `busy` and duration `0`. No connected voice conversation or quotation approval has been verified. Safe call metadata is in ignored `.local/twilio-call-test.json`. No automatic retry was made.
+
+The current Twilio trial guide explicitly blocks `<Stream>`, `<ConversationRelay>`, and SIP dialling. This rules out assuming the documented streaming-based ElevenLabs telephone integration will work on the trial. `<Say>`, speech `<Gather>`, and `<Play>` are supported, with a 10-hop limit and 10-minute maximum per call. A turn-by-turn assistant using speech recognition, a model response, and audio playback is a possible trial-compatible design; custom callback routing and latency still require actual verification. Browser ElevenLabs remains the alternative for fluid conversational testing without telephone streaming. [Voice trial guide](https://www.twilio.com/docs/usage/trials/try-out-voice).
 
 ## Finland setup findings
 
