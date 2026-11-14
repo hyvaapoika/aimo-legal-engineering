@@ -1,6 +1,6 @@
 # Valio Aimo smart webshop — implementation plan
 
-Date: 14 November 2026. Status: implementation plan; the features below are not yet implemented or verified. This supersedes the lunch-first interaction proposal in CHEF-PURCHASING-PLAN.md. The user has requested a Valio-like webshop with useful AI-assisted discovery across the supplied catalogue.
+Date: 14 November 2026. Status: original approved plan; implementation and verification updates are recorded in SMART-WEBSHOP-DEMO.md and PROGRESS.md. Provider selection changed to local embeddings after a verified quota limit. This supersedes the lunch-first interaction proposal in CHEF-PURCHASING-PLAN.md. The user has requested a Valio-like webshop with useful AI-assisted discovery across the supplied catalogue.
 
 ## 1. Product decision
 

@@ -230,13 +230,14 @@ export function createApp(
   app.use("/v1/*", async (c, next) => {
     const agent = await authenticate(c.req.raw);
     c.set("agent", agent);
-    const scope: Agent["scopes"][number] = c.req.path.includes("/catalog")
-      ? "catalog:read"
-      : c.req.path === "/v1/offers"
-        ? "offers:read"
-        : c.req.method === "POST"
-          ? "proposals:write"
-          : "orders:read";
+    const scope: Agent["scopes"][number] =
+      c.req.path.includes("/catalog") || c.req.path.includes("/discovery")
+        ? "catalog:read"
+        : c.req.path === "/v1/offers"
+          ? "offers:read"
+          : c.req.method === "POST"
+            ? "proposals:write"
+            : "orders:read";
     if (!agent.scopes.includes(scope))
       throw new DomainError("MISSING_SCOPE", `Requires ${scope}.`, 403);
     await next();
@@ -261,6 +262,36 @@ export function createApp(
       ),
     ),
   );
+  app.get("/v1/discovery/context", (c) =>
+    c.json({
+      customerId: c.get("agent").customerId,
+      deliverySites: c.get("agent").mandate.deliverySites,
+      source: service.valio.source,
+      today: new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Helsinki",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(service.now()),
+    }),
+  );
+  app.post("/v1/discovery/search", async (c) =>
+    c.json(await service.discovery.search(await c.req.json())),
+  );
+  app.post("/v1/discovery/compare", async (c) => {
+    const x = z
+      .object({ ids: z.array(z.string()).min(1).max(3) })
+      .strict()
+      .parse(await c.req.json());
+    return c.json(service.discovery.compare(x.ids));
+  });
+  app.post("/v1/discovery/alternatives", async (c) => {
+    const x = z
+      .object({ id: z.string() })
+      .strict()
+      .parse(await c.req.json());
+    return c.json(service.discovery.alternatives(x.id));
+  });
   app.post("/v1/offers", async (c) =>
     c.json(await service.getOffers(c.get("agent"), await c.req.json())),
   );

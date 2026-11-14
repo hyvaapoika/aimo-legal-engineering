@@ -19,7 +19,13 @@
     },
     "status": {
       "type": "string",
-      "enum": ["pending", "approved", "rejected", "amended", "expired"]
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "amended",
+        "expired"
+      ]
     },
     "challengeToken": {
       "type": "string"
@@ -64,7 +70,11 @@
             "type": "string"
           }
         },
-        "required": ["channel", "at", "outcome"],
+        "required": [
+          "channel",
+          "at",
+          "outcome"
+        ],
         "additionalProperties": false
       }
     },
@@ -80,7 +90,11 @@
     },
     "channel": {
       "type": "string",
-      "enum": ["app", "sms", "voice"]
+      "enum": [
+        "app",
+        "sms",
+        "voice"
+      ]
     },
     "signature": {
       "type": "string"

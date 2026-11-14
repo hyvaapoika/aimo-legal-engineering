@@ -26,6 +26,9 @@ for (const signal of ["SIGINT", "SIGTERM"] as const)
   process.on(signal, () => {
     clearInterval(worker);
     server.close(() => {
-      void service.db.close().then(() => process.exit(0));
+      void service
+        .closeDiscovery()
+        .then(() => service.db.close())
+        .then(() => process.exit(0));
     });
   });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { searchInput } from "@aimo/discovery";
 import {
   domainSchemas,
   offersInputSchema,
@@ -42,6 +43,29 @@ export function openapi(baseUrl: string) {
     },
     servers: [{ url: baseUrl }],
     paths: {
+      "/v1/discovery/context": {
+        get: operation(
+          "Current buyer delivery context; catalogue scope required",
+        ),
+      },
+      "/v1/discovery/search": {
+        post: operation(
+          "Full-catalogue discovery with strict dietary filters and optional advisory AI",
+          searchInput,
+        ),
+      },
+      "/v1/discovery/compare": {
+        post: operation(
+          "Compare up to three supplier records",
+          z.object({ ids: z.array(z.string()).min(1).max(3) }).strict(),
+        ),
+      },
+      "/v1/discovery/alternatives": {
+        post: operation(
+          "Find candidates preserving declared dietary properties; verify suitability and request offers separately",
+          z.object({ id: z.string() }).strict(),
+        ),
+      },
       "/v1/catalog/search": {
         get: {
           ...operation("Search the supplied catalog"),
@@ -161,7 +185,17 @@ export function discovery(baseUrl: string) {
     version: "0.1.0",
     name: "Aimo Agent Gateway",
     services: {
-      commerce: { capabilities: ["catalog", "offers", "proposals", "orders"] },
+      commerce: {
+        capabilities: [
+          "catalog",
+          "smart-discovery",
+          "comparison",
+          "alternatives",
+          "offers",
+          "proposals",
+          "orders",
+        ],
+      },
     },
     transports: {
       mcp: `${baseUrl}/mcp`,

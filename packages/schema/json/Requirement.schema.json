@@ -19,7 +19,10 @@
     },
     "source": {
       "type": "string",
-      "enum": ["inventory", "manual"]
+      "enum": [
+        "inventory",
+        "manual"
+      ]
     },
     "lines": {
       "type": "array",
@@ -39,10 +42,17 @@
               },
               "unit": {
                 "type": "string",
-                "enum": ["L", "KG", "PCS"]
+                "enum": [
+                  "L",
+                  "KG",
+                  "PCS"
+                ]
               }
             },
-            "required": ["qty", "unit"],
+            "required": [
+              "qty",
+              "unit"
+            ],
             "additionalProperties": false
           },
           "constraints": {
@@ -65,15 +75,28 @@
                 }
               }
             },
-            "required": ["claims", "allergenFree"],
+            "required": [
+              "claims",
+              "allergenFree"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["hint", "need", "constraints"],
+        "required": [
+          "hint",
+          "need",
+          "constraints"
+        ],
         "additionalProperties": false
       }
     }
   },
-  "required": ["id", "customerId", "neededBy", "source", "lines"],
+  "required": [
+    "id",
+    "customerId",
+    "neededBy",
+    "source",
+    "lines"
+  ],
   "additionalProperties": false
 }

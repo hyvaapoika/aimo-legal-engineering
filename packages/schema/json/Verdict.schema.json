@@ -14,7 +14,11 @@
     },
     "result": {
       "type": "string",
-      "enum": ["AUTO", "HOLD", "REFUSE"]
+      "enum": [
+        "AUTO",
+        "HOLD",
+        "REFUSE"
+      ]
     },
     "firedRules": {
       "type": "array",
@@ -26,7 +30,10 @@
           },
           "severity": {
             "type": "string",
-            "enum": ["HOLD", "REFUSE"]
+            "enum": [
+              "HOLD",
+              "REFUSE"
+            ]
           },
           "code": {
             "type": "string"
@@ -42,7 +49,12 @@
           "observed": {},
           "limit": {}
         },
-        "required": ["id", "severity", "code", "message"],
+        "required": [
+          "id",
+          "severity",
+          "code",
+          "message"
+        ],
         "additionalProperties": false
       }
     },
@@ -58,10 +70,17 @@
           },
           "result": {
             "type": "string",
-            "enum": ["AUTO", "HOLD", "REFUSE"]
+            "enum": [
+              "AUTO",
+              "HOLD",
+              "REFUSE"
+            ]
           }
         },
-        "required": ["productId", "result"],
+        "required": [
+          "productId",
+          "result"
+        ],
         "additionalProperties": false
       }
     },

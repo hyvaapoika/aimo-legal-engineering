@@ -25,7 +25,11 @@
           "const": "EUR"
         }
       },
-      "required": ["perOrder", "perWeek", "currency"],
+      "required": [
+        "perOrder",
+        "perWeek",
+        "currency"
+      ],
       "additionalProperties": false
     },
     "categories": {
@@ -48,11 +52,18 @@
     },
     "substitutionPolicy": {
       "type": "string",
-      "enum": ["explicit", "category", "none"]
+      "enum": [
+        "explicit",
+        "category",
+        "none"
+      ]
     },
     "allergenProfile": {
       "type": "string",
-      "enum": ["strict", "standard"]
+      "enum": [
+        "strict",
+        "standard"
+      ]
     },
     "requiredClaims": {
       "type": "array",
@@ -94,7 +105,11 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["app", "sms", "voice"]
+              "enum": [
+                "app",
+                "sms",
+                "voice"
+              ]
             }
           },
           "phone": {
@@ -115,11 +130,18 @@
                 "maximum": 23
               }
             },
-            "required": ["start", "end"],
+            "required": [
+              "start",
+              "end"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["userId", "name", "channels"],
+        "required": [
+          "userId",
+          "name",
+          "channels"
+        ],
         "additionalProperties": false
       }
     },

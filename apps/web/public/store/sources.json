@@ -1,0 +1,10 @@
+{
+  "logo": {
+    "file": "aimo-logo.svg",
+    "source": "https://cdn-wp.valio.fi/valio-wp-network/sites/2/2025/06/Valio_Aimo_logo_petrooli_RGB-1.svg",
+    "verifiedFrom": "https://www.valioaimo.fi/tuotehaku/?sivu=2",
+    "checkedOn": "2026-11-14",
+    "use": "Independent local hackathon prototype; not an official Valio deployment"
+  },
+  "productPhotos": "../kitchen/sources.json documents the five verified product photos; other products deliberately show Image unavailable. Media IDs are not URLs."
+}

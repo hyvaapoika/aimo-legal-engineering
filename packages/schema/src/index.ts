@@ -36,6 +36,27 @@ export const productSchema = z.object({
   allergens: z.array(z.string()),
   substitutions: z.array(id),
   temperatureCondition: z.number().optional(),
+  details: z
+    .object({
+      descriptions: z.record(z.string(), z.string()),
+      ingredients: z.record(z.string(), z.string()),
+      preparation: z.record(z.string(), z.string()),
+      usage: z.record(z.string(), z.string()),
+      storage: z.record(z.string(), z.string()),
+      media: z.array(z.object({ id: z.number().int(), primary: z.boolean() })),
+      origin: z.string().optional(),
+      updatedAt: z.string().optional(),
+      nutrition: z.array(
+        z.object({
+          id: z.string(),
+          value: z.number(),
+          unit: z.string(),
+          basisQuantity: z.number().optional(),
+          basisQuantityUnit: z.string().optional(),
+        }),
+      ),
+    })
+    .optional(),
   reliability: z.number().min(0).max(1).optional(),
   carbonKgPerKg: z.number().nonnegative().optional(),
 });

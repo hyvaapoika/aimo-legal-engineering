@@ -1,3 +1,4 @@
+import { searchInput } from "@aimo/discovery";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z } from "zod";
@@ -53,6 +54,38 @@ export async function handleMcp(
       annotations: { readOnlyHint: true },
     },
     (input) => call("catalog:read", () => service.search(agent, input)),
+  );
+  server.registerTool(
+    "discover_products",
+    {
+      description:
+        "Search all supplier products with bilingual keyword or optional AI-assisted discovery. Returns grounded product facts, facets, and unresolved constraints; never purchases.",
+      inputSchema: searchInput.shape,
+      annotations: { readOnlyHint: true },
+    },
+    (input) => call("catalog:read", () => service.discovery.search(input)),
+  );
+  server.registerTool(
+    "compare_products",
+    {
+      description:
+        "Compare up to three real catalogue records. Price and stock require get_offers.",
+      inputSchema: { ids: z.array(z.string()).min(1).max(3) },
+      annotations: { readOnlyHint: true },
+    },
+    ({ ids }) =>
+      call("catalog:read", async () => service.discovery.compare(ids)),
+  );
+  server.registerTool(
+    "find_alternatives",
+    {
+      description:
+        "Return supplier-listed or same-type candidates preserving explicit dietary properties. Customer must verify suitability and obtain current offers.",
+      inputSchema: { id: z.string() },
+      annotations: { readOnlyHint: true },
+    },
+    ({ id }) =>
+      call("catalog:read", async () => service.discovery.alternatives(id)),
   );
   server.registerTool(
     "get_offers",

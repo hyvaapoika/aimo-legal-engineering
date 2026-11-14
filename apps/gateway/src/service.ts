@@ -1,3 +1,4 @@
+import { Discovery } from "@aimo/discovery";
 import { randomUUID } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
@@ -67,6 +68,16 @@ export function publicAgent(agent: Agent) {
   return safe;
 }
 export class GatewayService {
+  private discoveryInstance?: Discovery;
+  get discovery() {
+    return (this.discoveryInstance ??= new Discovery(
+      this.catalog,
+      this.discoveryEmbeddingPath,
+    ));
+  }
+  async closeDiscovery() {
+    if (this.discoveryInstance) await this.discoveryInstance.close();
+  }
   constructor(
     readonly db: Database,
     readonly catalog: Catalog,
@@ -74,6 +85,7 @@ export class GatewayService {
     readonly signer: Signer,
     readonly now: () => Date = () => new Date(),
     readonly requireHumanApproval = false,
+    readonly discoveryEmbeddingPath?: string,
   ) {}
   async audit(
     type: string,
@@ -895,6 +907,7 @@ export async function bootstrap(config: Configuration) {
     new Signer(keys.privateKey, keys.publicKey),
     () => new Date(),
     config.demo,
+    join(config.stateDir, "discovery-local-embeddings.jsonl"),
   );
   await db.transaction(async (repo) => {
     const existing = await repo.get<Agent>("agents", DEMO_AGENT);

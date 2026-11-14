@@ -13,6 +13,7 @@ beforeAll(async () => {
   app = createApp(ctx.service, testConfig);
 });
 afterAll(async () => {
+  await ctx.service.closeDiscovery();
   await ctx.service.db.close();
 });
 describe("HTTP identity and interoperability", () => {
@@ -35,6 +36,58 @@ describe("HTTP identity and interoperability", () => {
         })
       ).status,
     ).toBe(200);
+  });
+  it("requires catalogue scope for smart discovery and keeps approvals human-only", async () => {
+    expect(
+      (
+        await app.request("/v1/discovery/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        })
+      ).status,
+    ).toBe(401);
+    const original = ctx.agent.scopes;
+    await ctx.service.db.transaction((repo) =>
+      repo.put("agents", { ...ctx.agent, scopes: ["offers:read"] }),
+    );
+    expect(
+      (
+        await app.request("/v1/discovery/search", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer test-buyer",
+            "Content-Type": "application/json",
+          },
+          body: "{}",
+        })
+      ).status,
+    ).toBe(403);
+    await ctx.service.db.transaction((repo) =>
+      repo.put("agents", { ...ctx.agent, scopes: original }),
+    );
+    const r = await app.request("/v1/discovery/search", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer test-buyer",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: "464249" }),
+    });
+    expect(r.status).toBe(200);
+    expect((await r.json()).products[0].id).toBe("464249");
+    expect(
+      (
+        await app.request("/admin/approvals/example/decide", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer test-buyer",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ decision: "approve" }),
+        })
+      ).status,
+    ).toBe(401);
   });
   it("verifies signed requests and rejects nonce replay and query tampering", async () => {
     const url = "http://localhost/v1/catalog/search?query=milk";
@@ -103,7 +156,18 @@ describe("HTTP identity and interoperability", () => {
         ),
       );
       const tools = await client.listTools();
-      expect(tools.tools).toHaveLength(5);
+      expect(tools.tools.map((t) => t.name)).toEqual(
+        expect.arrayContaining([
+          "search_catalog",
+          "discover_products",
+          "compare_products",
+          "find_alternatives",
+          "get_offers",
+          "submit_proposal",
+          "get_proposal",
+          "get_order",
+        ]),
+      );
       const search = await client.callTool({
         name: "search_catalog",
         arguments: { query: "lactose-free milk", limit: 3 },

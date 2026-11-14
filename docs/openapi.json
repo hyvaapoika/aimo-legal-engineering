@@ -11,6 +11,291 @@
     }
   ],
   "paths": {
+    "/v1/discovery/context": {
+      "get": {
+        "summary": "Current buyer delivery context; catalogue scope required",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        }
+      }
+    },
+    "/v1/discovery/search": {
+      "post": {
+        "summary": "Full-catalogue discovery with strict dietary filters and optional advisory AI",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "group": {
+                    "default": "All products",
+                    "type": "string",
+                    "enum": [
+                      "All products",
+                      "Dairy & eggs",
+                      "Meat & fish",
+                      "Fruit & vegetables",
+                      "Bakery",
+                      "Pantry",
+                      "Drinks",
+                      "Other"
+                    ]
+                  },
+                  "category": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "brand": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "claims": {
+                    "default": [],
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "FREE_FROM_LACTOSE",
+                        "FREE_FROM_GLUTEN",
+                        "VEGAN",
+                        "ORGANIC",
+                        "VEGETARIAN"
+                      ]
+                    }
+                  },
+                  "page": {
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000
+                  },
+                  "limit": {
+                    "default": 24,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 48
+                  },
+                  "smart": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "query",
+                  "group",
+                  "claims",
+                  "page",
+                  "limit",
+                  "smart"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        }
+      }
+    },
+    "/v1/discovery/compare": {
+      "post": {
+        "summary": "Compare up to three supplier records",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "ids"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        }
+      }
+    },
+    "/v1/discovery/alternatives": {
+      "post": {
+        "summary": "Find candidates preserving declared dietary properties; verify suitability and request offers separately",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        }
+      }
+    },
     "/v1/catalog/search": {
       "get": {
         "summary": "Search the supplied catalog",
@@ -904,6 +1189,122 @@
           "temperatureCondition": {
             "type": "number"
           },
+          "details": {
+            "type": "object",
+            "properties": {
+              "descriptions": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "ingredients": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "preparation": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "usage": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "storage": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "media": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "primary": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "primary"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "origin": {
+                "type": "string"
+              },
+              "updatedAt": {
+                "type": "string"
+              },
+              "nutrition": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "basisQuantity": {
+                      "type": "number"
+                    },
+                    "basisQuantityUnit": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "value",
+                    "unit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "descriptions",
+              "ingredients",
+              "preparation",
+              "usage",
+              "storage",
+              "media",
+              "nutrition"
+            ],
+            "additionalProperties": false
+          },
           "reliability": {
             "type": "number",
             "minimum": 0,
@@ -1175,6 +1576,122 @@
               },
               "temperatureCondition": {
                 "type": "number"
+              },
+              "details": {
+                "type": "object",
+                "properties": {
+                  "descriptions": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "ingredients": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "preparation": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "usage": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "storage": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "media": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "primary": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "primary"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "origin": {
+                    "type": "string"
+                  },
+                  "updatedAt": {
+                    "type": "string"
+                  },
+                  "nutrition": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        },
+                        "unit": {
+                          "type": "string"
+                        },
+                        "basisQuantity": {
+                          "type": "number"
+                        },
+                        "basisQuantityUnit": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "value",
+                        "unit"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "descriptions",
+                  "ingredients",
+                  "preparation",
+                  "usage",
+                  "storage",
+                  "media",
+                  "nutrition"
+                ],
+                "additionalProperties": false
               },
               "reliability": {
                 "type": "number",

@@ -20,7 +20,11 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["agent", "aimo", "human"]
+          "enum": [
+            "agent",
+            "aimo",
+            "human"
+          ]
         },
         "id": {
           "type": "string",
@@ -28,7 +32,10 @@
           "maxLength": 100
         }
       },
-      "required": ["kind", "id"],
+      "required": [
+        "kind",
+        "id"
+      ],
       "additionalProperties": false
     },
     "customerId": {

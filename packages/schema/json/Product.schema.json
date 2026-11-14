@@ -56,7 +56,10 @@
             "type": "string"
           }
         },
-        "required": ["unitId", "sizeInBaseUnits"],
+        "required": [
+          "unitId",
+          "sizeInBaseUnits"
+        ],
         "additionalProperties": false
       }
     },
@@ -75,13 +78,21 @@
         },
         "unit": {
           "type": "string",
-          "enum": ["L", "KG", "PCS"]
+          "enum": [
+            "L",
+            "KG",
+            "PCS"
+          ]
         },
         "inferred": {
           "type": "boolean"
         }
       },
-      "required": ["value", "unit", "inferred"],
+      "required": [
+        "value",
+        "unit",
+        "inferred"
+      ],
       "additionalProperties": false
     },
     "claims": {
@@ -112,6 +123,122 @@
     },
     "temperatureCondition": {
       "type": "number"
+    },
+    "details": {
+      "type": "object",
+      "properties": {
+        "descriptions": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "ingredients": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "preparation": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "usage": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "storage": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "media": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "primary": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "primary"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "origin": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "nutrition": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "value": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "basisQuantity": {
+                "type": "number"
+              },
+              "basisQuantityUnit": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "value",
+              "unit"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "descriptions",
+        "ingredients",
+        "preparation",
+        "usage",
+        "storage",
+        "media",
+        "nutrition"
+      ],
+      "additionalProperties": false
     },
     "reliability": {
       "type": "number",

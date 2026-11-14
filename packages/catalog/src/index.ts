@@ -9,6 +9,9 @@ import {
   type SearchInput,
 } from "@aimo/schema";
 
+const localized = z
+  .array(z.object({ value: z.string(), language: z.string() }))
+  .default([]);
 const measurement = z.object({ value: z.number(), unit: z.string() });
 const rawProduct = z.object({
   id: z.string(),
@@ -18,6 +21,7 @@ const rawProduct = z.object({
   allowedLotSize: z.number().positive(),
   deleted: z.boolean(),
   salesUnitGtin: z.string().optional(),
+  countryOfOrigin: z.string().optional(),
   temperatureCondition: z.number().optional(),
   units: z
     .array(
@@ -37,6 +41,26 @@ const rawProduct = z.object({
         .array(z.object({ value: z.string(), language: z.string() }))
         .default([]),
       brand: z.string().default(""),
+      marketingTexts: localized,
+      keyIngredients: localized,
+      preparationInstructions: localized,
+      usageInstructions: localized,
+      storageInstructions: localized,
+      lastUpdated: z.string().optional(),
+      medias: z
+        .array(z.object({ id: z.number().int(), primary: z.boolean() }))
+        .default([]),
+      nutritionalContent: z
+        .array(
+          z.object({
+            id: z.string(),
+            value: z.number(),
+            unit: z.string(),
+            basisQuantity: z.number().optional(),
+            basisQuantityUnit: z.string().optional(),
+          }),
+        )
+        .default([]),
       classifications: z
         .array(
           z.object({
@@ -60,6 +84,13 @@ const rawProduct = z.object({
     .default({
       names: [],
       brand: "",
+      marketingTexts: [],
+      keyIngredients: [],
+      preparationInstructions: [],
+      usageInstructions: [],
+      storageInstructions: [],
+      medias: [],
+      nutritionalContent: [],
       classifications: [],
       unitConversions: [],
     }),
@@ -133,6 +164,16 @@ export async function loadCatalog(dataDir: string): Promise<Catalog> {
     const free = values("nonAllergen")
       .filter((v) => v.unit === "FREE_FROM" && !allergens.includes(v.id))
       .map((v) => v.id);
+    const texts = (rows: { language: string; value: string }[]) =>
+      Object.fromEntries(
+        [...new Set(rows.map((r) => r.language))].map((lang) => [
+          lang,
+          rows
+            .filter((r) => r.language === lang)
+            .map((r) => r.value.trim())
+            .join("\n"),
+        ]),
+      );
     const packs = p.units.filter((unit) => unit.sizeInBaseUnits > 0);
     if (!packs.some((u) => u.unitId === p.baseUnit))
       packs.push({ unitId: p.baseUnit, sizeInBaseUnits: 1 });
@@ -155,6 +196,17 @@ export async function loadCatalog(dataDir: string): Promise<Catalog> {
         allergenFree: free,
         substitutions: p.substitutions.map((s) => s.substituteProduct),
         temperatureCondition: p.temperatureCondition,
+        details: {
+          descriptions: texts(p.synkkaData.marketingTexts),
+          ingredients: texts(p.synkkaData.keyIngredients),
+          preparation: texts(p.synkkaData.preparationInstructions),
+          usage: texts(p.synkkaData.usageInstructions),
+          storage: texts(p.synkkaData.storageInstructions),
+          media: p.synkkaData.medias,
+          nutrition: p.synkkaData.nutritionalContent,
+          origin: p.countryOfOrigin,
+          updatedAt: p.synkkaData.lastUpdated,
+        },
         reliability: reliability.get(p.id),
         carbonKgPerKg: carbon.get(p.id),
       }),

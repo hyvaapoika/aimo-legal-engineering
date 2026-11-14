@@ -26,11 +26,14 @@
     "test:postgres": "tsx scripts/verify-postgres.ts",
     "voice:setup": "tsx scripts/elevenlabs.ts setup",
     "voice:check": "tsx scripts/elevenlabs.ts check",
-    "voice:update": "tsx scripts/elevenlabs.ts update"
+    "voice:update": "tsx scripts/elevenlabs.ts update",
+    "index:search": "tsx scripts/index-discovery.ts",
+    "evaluate:search": "tsx scripts/evaluate-discovery-challenge.ts"
   },
   "dependencies": {
     "@aimo/catalog": "workspace:*",
     "@aimo/database": "workspace:*",
+    "@aimo/discovery": "workspace:*",
     "@aimo/feasibility": "workspace:*",
     "@aimo/ledger": "workspace:*",
     "@aimo/peppol": "workspace:*",
@@ -43,6 +46,7 @@
     "@elevenlabs/elevenlabs-js": "^2.78.0",
     "@google/genai": "^1.30.0",
     "@hono/node-server": "^1.19.0",
+    "@huggingface/transformers": "3.8.1",
     "@modelcontextprotocol/sdk": "^1.25.0",
     "csv-parse": "^6.1.0",
     "decimal.js": "^10.6.0",

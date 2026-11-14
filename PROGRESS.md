@@ -12,6 +12,17 @@
 
 Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
+## Full-catalogue smart webshop implementation — 14 November 2026
+
+- Replaced the ten-product homepage with the Valio-style full catalogue: search, URL filters, brand/dietary controls, details, comparison tray, editable basket, saved baskets, explicit replacements and Undo.
+- Preserved all 17,546 supplied products and richer multilingual descriptions, ingredients, instructions, nutrition, origin and media references. Five verified product photos are used; other records show a placeholder. User confirmed that no media endpoint is available yet.
+- Added scoped REST and MCP discovery/compare/alternative interfaces. Existing catalogue and purchasing contracts remain available; generated schemas/OpenAPI are refreshed. The localhost storefront proxy uses only buyer authority.
+- Verified live Gemini structured intent (`gemini-3.5-flash-lite`). The cloud embedding trial reached quota after 146 records, so indexing moved to a local multilingual MiniLM model. Completed 17,546/17,546 local embeddings with content/model version checks and atomic activation of the complete index.
+- Deterministic declaration filters, quantity conversion, exact money arithmetic, offer refresh, idempotent proposal retry and mandatory human review remain outside model control. Added boundary tests for unknown stock, missing/contradictory requirements, invalid identifiers, unverified conversions and access scopes.
+- Browser-tested search, two-product comparison, direct quantity editing, replacement consequences, explicit replacement, Undo and a held human-approval request. Tested 1440px desktop and 390px mobile layout. Supplier prices/availability were mock data; no new real supplier order or phone call was made.
+- Local search is a separate in-memory PGlite/pgvector read store; cold reconstruction remains noticeable. Production buyer SSO, hosted search, official taxonomy, catalogue-wide photography and a chef-labelled held-out relevance study remain external/further validation work.
+- Reproduction steps and exact integration boundaries: `docs/SMART-WEBSHOP-DEMO.md`. The original plan below records the earlier planning turn, not current implementation status.
+
 ## Smart webshop implementation plan — 14 November 2026
 
 - Recorded the user-requested full-catalogue, Valio-style webshop direction in `docs/SMART-WEBSHOP-PLAN.md`; it supersedes the lunch-first UI plan.

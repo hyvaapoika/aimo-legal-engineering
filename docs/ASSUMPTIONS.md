@@ -1,5 +1,16 @@
 # Implementation decisions and limits
 
+## Current smart-webshop verification (14 November 2026)
+
+The full-catalogue storefront is implemented locally. Gemini structured interpretation was exercised with the supplied server-side key; all 17,546 static documents were embedded with a local multilingual MiniLM model after the Gemini embedding quota was exhausted. No paid upgrade or managed vector service was enabled. Earlier provider-status notes below describe earlier implementation stages.
+
+The browser flow used mock prices/stock, five verified product-photo mappings, and explicit placeholders for the remaining images. No official image endpoint or taxonomy mapping was supplied. Broad navigation/product-type labels are application heuristics, never supplier declarations. Semantic scores are not confidence or suitability guarantees.
+
+The storefront uses a local demo buyer through a buyer-only server proxy. Production requests to that proxy are refused until buyer authentication exists. Human credentials and approval remain separate. The search read store uses PGlite/pgvector even when the commercial database uses PostgreSQL; a hosted PostgreSQL discovery adapter has not been implemented or tested. Commercial SQL transaction paths were not migrated in this change.
+
+Browser verification reached a held human-review proposal, with existing category and weekly-budget holds still enforced. Local tests also exercise the established approval/order/ledger flow. No real supplier fulfilment, public deployment, or new telephone integration was exercised. See `SMART-WEBSHOP-DEMO.md` for setup and evaluation limits.
+
+
 The current planned direction is the full-catalogue smart webshop described in [SMART-WEBSHOP-PLAN.md](SMART-WEBSHOP-PLAN.md). Hybrid search, model-based intent, catalogue-wide images and the new storefront-to-cart integration remain planned, not implemented. The prototype limitations below describe the app that currently runs.
 
 ## Chef interface preview — 14 November 2026
