@@ -43,6 +43,12 @@ export function openapi(baseUrl: string) {
     },
     servers: [{ url: baseUrl }],
     paths: {
+      "/v1/discovery/suggest": {
+        post: operation(
+          "Instant product suggestions without model calls or vector initialization",
+          searchInput,
+        ),
+      },
       "/v1/discovery/context": {
         get: operation(
           "Current buyer delivery context; catalogue scope required",

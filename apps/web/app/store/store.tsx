@@ -41,6 +41,15 @@ import {
   type Line,
 } from "./types";
 import "./store.css";
+import "./live.css";
+import { RecipeBuilder } from "./recipe-builder";
+import { basicIntent } from "../../../../packages/discovery/src/intent";
+import {
+  recipes,
+  recipeMatches,
+  cookingIntent,
+  type Recipe,
+} from "./recipe-state";
 import { replacement, cents, restoreLines } from "./cart";
 import { Decimal } from "decimal.js";
 const groups = [
@@ -105,7 +114,7 @@ export default function Store() {
     [brand, setBrand] = useState(""),
     [claims, setClaims] = useState<string[]>([]),
     [page, setPage] = useState(1),
-    [smart, setSmart] = useState(false),
+    [smart, setSmart] = useState(true),
     [retry, setRetry] = useState(0);
   const [result, setResult] = useState<SearchResult>(),
     [loading, setLoading] = useState(false),
@@ -130,6 +139,12 @@ export default function Store() {
   const [proposal, setProposal] = useState<Proposal>(),
     [submitting, setSubmitting] = useState(false),
     [checkoutError, setCheckoutError] = useState("");
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null),
+    [browse, setBrowse] = useState(false),
+    [enhancing, setEnhancing] = useState(false);
+  const [pendingEnhancement, setPendingEnhancement] = useState<SearchResult>();
+  const typing = useRef(false),
+    touched = useRef(false);
   const serial = useRef(0),
     priceSerial = useRef(0),
     dateRef = useRef(""),
@@ -149,7 +164,8 @@ export default function Store() {
       setBrand(p.get("brand") || "");
       setClaims((p.get("claims") || "").split(",").filter((c) => labels[c]));
       setPage(Math.max(1, Number(p.get("page")) || 1));
-      setSmart(p.get("smart") === "1");
+      setSmart(p.get("smart") !== "0");
+      setSelectedRecipe(null);
     };
     restore();
     window.addEventListener("popstate", restore);
@@ -191,8 +207,21 @@ export default function Store() {
     return () => clearTimeout(t);
   }, [toast]);
   useEffect(() => {
+    if (!hydrated || !typing.current) return;
+    const timer = setTimeout(() => {
+      setQuery(input);
+      setPage(1);
+      setSmart(true);
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [input, hydrated]);
+  useEffect(() => {
     if (!hydrated) return;
     const current = ++serial.current;
+    const controller = new AbortController();
+    touched.current = false;
+    setPendingEnhancement(undefined);
+    setEnhancing(false);
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
@@ -204,27 +233,67 @@ export default function Store() {
     if (smart) params.set("smart", "1");
     const url =
       location.pathname + (params.size ? "?" + params.toString() : "");
-    if (url !== location.pathname + location.search)
-      history.pushState(null, "", url);
-    api<SearchResult>("search", {
-      query,
+    if (url !== location.pathname + location.search) {
+      if (typing.current) history.replaceState(null, "", url);
+      else history.pushState(null, "", url);
+    }
+    const meal = cookingIntent(query) && recipeMatches(query).length > 0;
+    const actualQuery = meal ? "pasta" : query;
+    const body = {
+      query: actualQuery,
       group,
       brand: brand || undefined,
       claims,
       page,
       limit: 24,
-      smart,
-    })
+      smart: false,
+    };
+    api<SearchResult>("suggest", body, controller.signal)
       .then((r) => {
-        if (serial.current === current) setResult(r);
+        if (serial.current === current) {
+          setResult(r);
+          setLoading(false);
+        }
       })
       .catch((e) => {
-        if (serial.current === current) setError(e.message);
-      })
-      .finally(() => {
-        if (serial.current === current) setLoading(false);
+        if (serial.current === current && e.name !== "AbortError") {
+          setError(e.message);
+          setLoading(false);
+        }
       });
+    const timer =
+      smart && query.trim().length >= 3 && !meal
+        ? setTimeout(() => {
+            if (serial.current !== current) return;
+            setEnhancing(true);
+            api<SearchResult>(
+              "search",
+              { ...body, query, smart: true },
+              controller.signal,
+            )
+              .then((r) => {
+                if (serial.current === current) {
+                  if (touched.current) setPendingEnhancement(r);
+                  else setResult(r);
+                }
+              })
+              .catch(() => {})
+              .finally(() => {
+                if (serial.current === current) setEnhancing(false);
+              });
+          }, 900)
+        : undefined;
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query, group, brand, claims, page, smart, hydrated, retry]);
+  const visibleRecipes = recipeMatches(input);
+  const mealMode =
+    !browse &&
+    (!input.trim() || (cookingIntent(input) && visibleRecipes.length > 0));
+  const showProducts = !selectedRecipe && (!mealMode || browse);
+  const savedIds = new Set(saved.flat().map((l) => l.product.id));
   const extra =
     view?.kind === "compare"
       ? compare
@@ -236,7 +305,7 @@ export default function Store() {
   const priceIds = [
     ...new Set(
       [
-        ...(result?.products || []),
+        ...(showProducts ? result?.products || [] : []),
         ...extra,
         ...cart.map((l) => l.product),
       ].map((p) => p.id),
@@ -270,6 +339,9 @@ export default function Store() {
       });
   }, [date, priceIds]);
   const search = (q: string, enhance = true) => {
+    typing.current = false;
+    setSelectedRecipe(null);
+    setBrowse(false);
     setRetry((n) => n + 1);
     setInput(q);
     setQuery(q);
@@ -279,13 +351,14 @@ export default function Store() {
   };
   const submitSearch = (e: FormEvent) => {
     e.preventDefault();
-    search(input, true);
+    if (!selectedRecipe) search(input, true);
   };
   const filterClaim = (c: string) => {
     setClaims((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]));
     setPage(1);
   };
   const changeCart = (next: Line[], message: string) => {
+    touched.current = true;
     cartRevision.current++;
     checkoutKey.current = "";
     checkoutPayload.current = null;
@@ -341,6 +414,7 @@ export default function Store() {
     }
   };
   const toggleCompare = (p: StoreProduct) => {
+    touched.current = true;
     setCompare((s) =>
       s.some((x) => x.id === p.id)
         ? s.filter((x) => x.id !== p.id)
@@ -568,19 +642,6 @@ export default function Store() {
   };
   return (
     <div className="store">
-      <div className="s-topbar">
-        <span>
-          <Truck size={14} /> Valio Aimo · Foodservice wholesale
-        </span>
-        <span>
-          Local hackathon webshop <i />{" "}
-          {context?.source === "valio" ? "Challenge API" : "Demo"} prices &
-          availability
-        </span>
-        <Link href="/operations">
-          Purchasing & approvals <ArrowRight size={13} />
-        </Link>
-      </div>
       <header className="s-header">
         <a href="/" aria-label="Valio Aimo home">
           <img src="/store/aimo-logo.svg" alt="Valio Aimo" />
@@ -595,11 +656,17 @@ export default function Store() {
               setBrand("");
             }}
           >
-            PRODUCTS
+            Shop
           </button>
-          <button onClick={() => setSavedOpen(true)}>SAVED BASKETS</button>
-          <button onClick={() => setDateOpen(!dateOpen)}>
-            DELIVERY <ChevronDown size={13} />
+          <button onClick={() => setSavedOpen(true)}>Saved lists</button>
+          <button
+            onClick={() => {
+              setDateOpen(!dateOpen);
+              setBrowse(true);
+              setSelectedRecipe(null);
+            }}
+          >
+            Delivery <ChevronDown size={13} />
           </button>
         </nav>
         <div className="s-header-actions">
@@ -612,9 +679,7 @@ export default function Store() {
             }
           >
             <span>HH</span>
-            <div>
-              Hotel Haven<small>Demo kitchen</small>
-            </div>
+            <div>Hotel Haven</div>
           </button>
           <button
             className="s-cart-button"
@@ -626,341 +691,429 @@ export default function Store() {
           </button>
         </div>
       </header>
-      <section className="s-hero">
-        <div>
-          <span className="s-eyebrow">GOOD FOOD STARTS HERE</span>
-          <h1>Everything for your kitchen.</h1>
-          <p>
-            Your familiar assortment. A smarter way to find the right
-            ingredients.
-          </p>
-        </div>
-        <div className="s-search-area">
-          <form onSubmit={submitSearch}>
-            <Search size={23} />
-            <label className="s-sr" htmlFor="store-search">
-              Search products
-            </label>
-            <input
-              id="store-search"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Try ‘lactose-free cooking cream, 1 litre’"
-            />
-            <button type="submit" aria-label="Search catalogue">
-              <ArrowRight size={23} />
-            </button>
-          </form>
-          <div>
-            <span>
-              <Sparkles size={13} /> Search by name, product number, or what you
-              need
-            </span>
-            <button onClick={() => search(query, !smart)}>
-              {smart ? "Smart search on" : "Basic search"}{" "}
-              <ChevronDown size={12} />
-            </button>
-          </div>
-        </div>
-      </section>
-      <main className="s-main">
-        <div className="s-breadcrumb">
-          Products <ChevronRight size={12} />{" "}
-          {group === "All products" ? "All products" : group}
-        </div>
-        <div className="s-toolbar">
-          <div className="s-group-tabs">
-            {groups.slice(0, -1).map((g) => (
-              <button
-                key={g}
-                className={group === g ? "active" : ""}
-                onClick={() => {
-                  setGroup(g);
-                  setPage(1);
-                }}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-          <button
-            className="s-filter-toggle"
-            onClick={() => setFilterOpen(!filterOpen)}
-            aria-expanded={filterOpen}
-          >
-            <SlidersHorizontal size={17} /> Filters{" "}
-            {claims.length + Number(!!brand) > 0 && (
-              <b>{claims.length + Number(!!brand)}</b>
-            )}
-          </button>
-        </div>
-        <div className={`s-filters ${filterOpen ? "open" : ""}`}>
-          <label>
-            Brand{" "}
-            <select
-              aria-label="Filter by brand"
-              value={brand}
-              onChange={(e) => {
-                setBrand(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">All brands</option>
-              {brand && !result?.facets.brands.some(([b]) => b === brand) && (
-                <option>{brand}</option>
-              )}
-              {result?.facets.brands.map(([b, n]) => (
-                <option key={b} value={b}>
-                  {b} ({n})
-                </option>
-              ))}
-            </select>
+      <section className="r-composer">
+        {!input.trim() && <h1>What’s on the menu?</h1>}
+        <form onSubmit={submitSearch}>
+          <Sparkles size={23} />
+          <label className="s-sr" htmlFor="store-search">
+            Tell Aimo what you need
           </label>
-          {Object.entries(labels).map(([c, label]) => (
-            <button
-              key={c}
-              className={claims.includes(c) ? "selected" : ""}
-              aria-pressed={claims.includes(c)}
-              onClick={() => filterClaim(c)}
-            >
-              {claims.includes(c) && <Check size={13} />} {label}
-            </button>
-          ))}
-          <span className="s-delivery">
-            <Truck size={16} />
-            <button onClick={() => setDateOpen(!dateOpen)}>
-              {date
-                ? new Date(date + "T12:00").toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                  })
-                : "Delivery date"}{" "}
-              <ChevronDown size={12} />
-            </button>
-          </span>
-        </div>
-        {dateOpen && (
-          <div className="s-date-panel">
-            <CalendarDays size={22} />
-            <div>
-              <strong>Choose your requested delivery date</strong>
-              <p>
-                Availability is checked for this date. It is not a delivery
-                guarantee.
-              </p>
-            </div>
-            <input
-              aria-label="Requested delivery date"
-              type="date"
-              min={context?.today}
-              value={date}
-              onChange={(e) => {
-                if (!e.target.value) return;
-                dateRef.current = e.target.value;
-                setDate(e.target.value);
-                setOffers({});
-                cartRevision.current++;
-                checkoutKey.current = "";
-                checkoutPayload.current = null;
-                setProposal(undefined);
-              }}
+          <input
+            id="store-search"
+            autoComplete="off"
+            value={input}
+            onChange={(e) => {
+              typing.current = true;
+              serial.current++;
+              setEnhancing(false);
+              setPendingEnhancement(undefined);
+              setInput(e.target.value);
+              setBrowse(false);
+              if (!e.target.value.trim()) setSelectedRecipe(null);
+            }}
+            placeholder={
+              selectedRecipe
+                ? "Try “for 120 people” or “I already have pasta”"
+                : "I’m making pasta for 80 people…"
+            }
+          />
+          {(loading || enhancing) && (
+            <LoaderCircle
+              size={18}
+              className="spin"
+              aria-label={loading ? "Finding products" : "Refining suggestions"}
             />
+          )}
+          {input && (
             <button
-              className="s-icon"
-              aria-label="Close delivery settings"
-              onClick={() => setDateOpen(false)}
+              type="button"
+              aria-label="Clear request"
+              onClick={() => search("", false)}
             >
               <X size={18} />
             </button>
-          </div>
+          )}
+          <button type="submit" aria-label="Refine request">
+            <ArrowRight size={21} />
+          </button>
+        </form>
+        <div className="r-composer-below">
+          {!input ? (
+            <>
+              <button onClick={() => search("I’m making pasta for 80 people")}>
+                Pasta for 80 <ArrowRight size={12} />
+              </button>
+              <button
+                onClick={() => search("lactose-free cooking cream, 1 litre")}
+              >
+                Find an ingredient <Search size={12} />
+              </button>
+              {saved.length > 0 && (
+                <button onClick={() => setSavedOpen(true)}>
+                  Use a saved list <Heart size={12} />
+                </button>
+              )}
+            </>
+          ) : (
+            <span>
+              {selectedRecipe
+                ? "Change portions or tell me what you already have."
+                : mealMode
+                  ? "Choose a dish. We’ll work out the ingredients."
+                  : enhancing
+                    ? "Refining matches…"
+                    : "Products update as you type."}
+            </span>
+          )}
+          <kbd>↵</kbd>
+        </div>
+      </section>
+      <main className="s-main">
+        {selectedRecipe ? (
+          <RecipeBuilder
+            key={selectedRecipe.id}
+            recipe={selectedRecipe}
+            instruction={input}
+            claims={[...new Set([...claims, ...basicIntent(input).claims])]}
+            unresolved={basicIntent(input).unresolved}
+            date={date}
+            saved={saved}
+            source={context?.source}
+            onBack={() => setSelectedRecipe(null)}
+            onAdd={(lines) => {
+              const merged = new Map(cart.map((l) => [l.product.id, l]));
+              for (const l of lines) {
+                const old = merged.get(l.product.id);
+                merged.set(l.product.id, {
+                  ...l,
+                  qty: new Decimal(old?.qty || 0).plus(l.qty).toNumber(),
+                  requiredClaims: [
+                    ...new Set([
+                      ...(old?.requiredClaims || []),
+                      ...(l.requiredClaims || []),
+                    ]),
+                  ],
+                });
+              }
+              if (merged.size > 100) {
+                setToast("A basket supports up to 100 product lines.");
+                return false;
+              }
+              changeCart(
+                [...merged.values()],
+                `${lines.length} selected ingredients added to your basket.`,
+              );
+              return true;
+            }}
+          />
+        ) : (
+          mealMode && (
+            <section className="r-ideas">
+              <div className="r-section-title">
+                <h2>{input ? "A few ways to make it" : "Start with a dish"}</h2>
+                <span>From Valio’s recipe kitchen</span>
+              </div>
+              <div className="r-recipe-grid">
+                {[...visibleRecipes]
+                  .sort(
+                    (a, b) =>
+                      Number(
+                        b.ingredients.some((i) =>
+                          i.preferredIds.some((id) => savedIds.has(id)),
+                        ),
+                      ) -
+                      Number(
+                        a.ingredients.some((i) =>
+                          i.preferredIds.some((id) => savedIds.has(id)),
+                        ),
+                      ),
+                  )
+                  .map((r) => (
+                    <button
+                      className="r-recipe-card"
+                      key={r.id}
+                      onClick={() => {
+                        setSelectedRecipe(r);
+                        touched.current = true;
+                      }}
+                    >
+                      <div>
+                        <img src={r.image} alt={r.title} />
+                        <span>{r.method}</span>
+                      </div>
+                      <h3>{r.title}</h3>
+                      <p>{r.description}</p>
+                      <footer>
+                        <span>
+                          {r.ingredients.some((i) =>
+                            i.preferredIds.some((id) => savedIds.has(id)),
+                          )
+                            ? "Uses a saved product"
+                            : `${r.ingredients.filter((i) => !i.water).length} ingredients`}
+                        </span>
+                        <span>
+                          Plan ingredients <ArrowRight size={15} />
+                        </span>
+                      </footer>
+                    </button>
+                  ))}
+              </div>
+              <button
+                className="r-browse"
+                onClick={() => {
+                  setBrowse(true);
+                  setSelectedRecipe(null);
+                }}
+              >
+                Browse {input ? "matching products" : "all products"} instead{" "}
+                <ArrowRight size={15} />
+              </button>
+            </section>
+          )
         )}
-        {query && (
-          <section className="s-smart-strip">
-            <Sparkles size={20} />
-            <div>
-              <strong>
-                {loading
-                  ? "Finding your products…"
-                  : result?.mode === "ai" || result?.mode === "hybrid"
-                    ? "Understood your search"
-                    : result?.mode === "semantic"
-                      ? "Searching by meaning"
-                      : "Search results"}{" "}
-                <span>“{query}”</span>
-              </strong>
-              <div className="s-understood">
-                {result?.intent.claims.map((c) => (
+        {showProducts && (
+          <>
+            <div className="s-toolbar">
+              <div className="s-group-tabs">
+                {groups.slice(0, -1).map((g) => (
+                  <button
+                    key={g}
+                    className={group === g ? "active" : ""}
+                    onClick={() => {
+                      setGroup(g);
+                      setPage(1);
+                    }}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="s-filter-toggle"
+                onClick={() => setFilterOpen(!filterOpen)}
+                aria-expanded={filterOpen}
+              >
+                <SlidersHorizontal size={17} /> Filters{" "}
+                {claims.length + Number(!!brand) > 0 && (
+                  <b>{claims.length + Number(!!brand)}</b>
+                )}
+              </button>
+            </div>
+            <div className={`s-filters ${filterOpen ? "open" : ""}`}>
+              <label>
+                Brand{" "}
+                <select
+                  aria-label="Filter by brand"
+                  value={brand}
+                  onChange={(e) => {
+                    setBrand(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">All brands</option>
+                  {brand &&
+                    !result?.facets.brands.some(([b]) => b === brand) && (
+                      <option>{brand}</option>
+                    )}
+                  {result?.facets.brands.map(([b, n]) => (
+                    <option key={b} value={b}>
+                      {b} ({n})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {Object.entries(labels).map(([c, label]) => (
+                <button
+                  key={c}
+                  className={claims.includes(c) ? "selected" : ""}
+                  aria-pressed={claims.includes(c)}
+                  onClick={() => filterClaim(c)}
+                >
+                  {claims.includes(c) && <Check size={13} />} {label}
+                </button>
+              ))}
+              <span className="s-delivery">
+                <Truck size={16} />
+                <button
+                  onClick={() => {
+                    setDateOpen(!dateOpen);
+                    setBrowse(true);
+                    setSelectedRecipe(null);
+                  }}
+                >
+                  {date
+                    ? new Date(date + "T12:00").toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })
+                    : "Delivery date"}{" "}
+                  <ChevronDown size={12} />
+                </button>
+              </span>
+            </div>
+            {dateOpen && (
+              <div className="s-date-panel">
+                <CalendarDays size={22} />
+                <div>
+                  <strong>Choose your requested delivery date</strong>
+                  <p>
+                    Availability is checked for this date. It is not a delivery
+                    guarantee.
+                  </p>
+                </div>
+                <input
+                  aria-label="Requested delivery date"
+                  type="date"
+                  min={context?.today}
+                  value={date}
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    dateRef.current = e.target.value;
+                    setDate(e.target.value);
+                    setOffers({});
+                    cartRevision.current++;
+                    checkoutKey.current = "";
+                    checkoutPayload.current = null;
+                    setProposal(undefined);
+                  }}
+                />
+                <button
+                  className="s-icon"
+                  aria-label="Close delivery settings"
+                  onClick={() => setDateOpen(false)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
+            {!!result?.intent.claims.length && (
+              <div className="r-query-chips">
+                {result.intent.claims.map((c) => (
                   <button
                     key={c}
-                    aria-label={`Remove ${labels[c]} requirement`}
                     onClick={() => {
                       setClaims(result.intent.claims.filter((x) => x !== c));
                       search(result.intent.terms.join(" "), false);
                     }}
                   >
-                    <Check size={12} />
-                    {labels[c]}
-                    <X size={12} />
+                    {labels[c]} <X size={12} />
                   </button>
                 ))}
-                {result?.intent.preferredPack && (
-                  <span>
-                    <Package size={12} />
-                    Pack preference: {result.intent.preferredPack} · check pack
-                    sizes
-                  </span>
-                )}
-                {result?.refinements.map((r) => (
-                  <button key={r} onClick={() => search(r, true)}>
-                    {r}
-                    <ArrowRight size={12} />
-                  </button>
-                ))}
-                {!result?.refinements.length &&
-                  !result?.intent.claims.length && (
-                    <small>
-                      Browse real catalogue matches, or refine with the filters.
-                    </small>
-                  )}
               </div>
-            </div>
-            <button
-              className="s-icon"
-              aria-label="Clear search"
-              onClick={() => {
-                search("", false);
-                setClaims([]);
-                setBrand("");
-              }}
-            >
-              <X size={18} />
-            </button>
-          </section>
-        )}
-        <div className="s-results-heading">
-          <div>
-            <h2>
-              {query
-                ? `Products for “${query}”`
-                : group === "All products"
-                  ? "Explore the assortment"
-                  : group}
-            </h2>
-            <span>
-              {loading
-                ? "Finding products…"
-                : `${(result?.total || 0).toLocaleString()} products`}{" "}
-              <i /> {(result?.catalogCount || 17546).toLocaleString()} in the
-              catalogue
-            </span>
-          </div>
-          <div>
-            {loading && <LoaderCircle size={17} className="spin" />}
-            <span>
-              {loading
-                ? ""
-                : smart && result?.mode === "basic"
-                  ? "Basic search · AI unavailable"
-                  : smart
-                    ? "Relevance"
-                    : "Catalogue order"}
-            </span>
-          </div>
-        </div>
-        {error && (
-          <div className="s-error" role="alert">
-            {error}
-            <button onClick={() => setRetry((n) => n + 1)}>Retry search</button>
-          </div>
-        )}
-        {priceError && (
-          <div className="s-error" role="alert">
-            Prices and stock could not be confirmed. {priceError}
-          </div>
-        )}
-        {(result?.unresolved.length || 0) > 0 && (
-          <div className="s-caution">
-            <Info size={22} />
-            <div>
-              <strong>One requirement needs a closer look</strong>
-              {result?.unresolved.map((u) => (
-                <p key={u}>{u}</p>
-              ))}
-              <p>
-                We haven’t relaxed your requirement. Edit your search to
-                continue.
-              </p>
-            </div>
-          </div>
-        )}
-        <div
-          className={`s-products ${loading ? "loading" : ""}`}
-          aria-busy={loading}
-        >
-          {result?.products.map(card)}
-        </div>
-        {!loading &&
-          result &&
-          result.total === 0 &&
-          !result.unresolved.length && (
-            <div className="s-empty">
-              <Search size={36} />
-              <h3>No matching products</h3>
-              <p>
-                Try a different product name or change a filter. Required
-                declarations are never assumed.
-              </p>
+            )}
+            {pendingEnhancement && (
               <button
-                className="s-button"
+                className="r-new-matches"
                 onClick={() => {
-                  setClaims([]);
-                  setBrand("");
-                  setGroup("All products");
+                  setResult(pendingEnhancement);
+                  setPendingEnhancement(undefined);
                 }}
               >
-                Clear filters
+                Updated matches ready <ArrowRight size={14} />
               </button>
+            )}
+            <div className="s-results-heading">
+              <h2>
+                {loading
+                  ? "Finding products…"
+                  : `${(result?.total || 0).toLocaleString()} products`}
+              </h2>
+              {context?.source !== "valio" && (
+                <span className="r-price-note">Sample prices</span>
+              )}
             </div>
-          )}
-        {result && result.pages > 1 && (
-          <nav className="s-pagination" aria-label="Product pages">
-            <button
-              disabled={page === 1 || loading}
-              onClick={() => {
-                setPage((p) => p - 1);
-                window.scrollTo({ top: 250 });
+            {error && (
+              <div className="s-error" role="alert">
+                {error}
+                <button onClick={() => setRetry((n) => n + 1)}>
+                  Retry search
+                </button>
+              </div>
+            )}
+            {priceError && (
+              <div className="s-error" role="alert">
+                Prices and stock could not be confirmed. {priceError}
+              </div>
+            )}
+            {(result?.unresolved.length || 0) > 0 && (
+              <div className="s-caution">
+                <Info size={22} />
+                <div>
+                  <strong>One requirement needs a closer look</strong>
+                  {result?.unresolved.map((u) => (
+                    <p key={u}>{u}</p>
+                  ))}
+                  <p>
+                    We haven’t relaxed your requirement. Edit your search to
+                    continue.
+                  </p>
+                </div>
+              </div>
+            )}
+            <div
+              className="s-products"
+              onPointerDown={() => {
+                touched.current = true;
               }}
+              aria-busy={loading}
             >
-              <ArrowLeft size={16} /> Previous
-            </button>
-            <span>
-              Page {page} of {result.pages}
-            </span>
-            <button
-              disabled={page >= result.pages || loading}
-              onClick={() => {
-                setPage((p) => p + 1);
-                window.scrollTo({ top: 250 });
-              }}
-            >
-              Next <ArrowRight size={16} />
-            </button>
-          </nav>
+              {result?.products.map(card)}
+            </div>
+            {!loading &&
+              result &&
+              result.total === 0 &&
+              !result.unresolved.length && (
+                <div className="s-empty">
+                  <Search size={36} />
+                  <h3>No matching products</h3>
+                  <p>
+                    Try a different product name or change a filter. Required
+                    declarations are never assumed.
+                  </p>
+                  <button
+                    className="s-button"
+                    onClick={() => {
+                      setClaims([]);
+                      setBrand("");
+                      setGroup("All products");
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              )}
+            {result && result.pages > 1 && (
+              <nav className="s-pagination" aria-label="Product pages">
+                <button
+                  disabled={page === 1 || loading}
+                  onClick={() => {
+                    setPage((p) => p - 1);
+                    window.scrollTo({ top: 250 });
+                  }}
+                >
+                  <ArrowLeft size={16} /> Previous
+                </button>
+                <span>
+                  Page {page} of {result.pages}
+                </span>
+                <button
+                  disabled={page >= result.pages || loading}
+                  onClick={() => {
+                    setPage((p) => p + 1);
+                    window.scrollTo({ top: 250 });
+                  }}
+                >
+                  Next <ArrowRight size={16} />
+                </button>
+              </nav>
+            )}
+          </>
         )}
-        <div className="s-catalog-note">
-          <Package size={15} />
-          <span>
-            Supplier product data · Verified images where available · Missing
-            declarations remain unknown
-          </span>
-        </div>
       </main>
-      <footer className="s-footer">
-        <img src="/store/aimo-logo.svg" alt="Valio Aimo" />
-        <p>For people who make good food happen.</p>
-        <span>Independent hackathon prototype · Simulated purchasing</span>
+      <footer className="r-footer">
+        <span>Valio Aimo</span>
         <Link href="/operations">
-          Open purchasing controls <ArrowRight size={15} />
+          Orders & approvals <ArrowRight size={13} />
         </Link>
       </footer>
       {compare.length > 0 && (
@@ -1279,6 +1432,8 @@ export default function Store() {
             <button
               onClick={() => {
                 setView(null);
+                setSelectedRecipe(null);
+                setBrowse(true);
                 setDateOpen(true);
               }}
             >

@@ -1,0 +1,383 @@
+[
+  {
+    "id": "tomato-pasta",
+    "title": "Tomato & basil pasta",
+    "description": "Fresh pasta, tomato sauce and basil.",
+    "method": "Stovetop",
+    "tags": ["pasta", "tomato", "basil", "vegetarian", "Italian", "lunch"],
+    "basePortions": 10,
+    "source": "https://www.valioaimo.fi/reseptit/tuorepastaa-tomaatti-basilikakastikkeella/",
+    "sourceTitle": "Tuorepastaa tomaatti-basilikakastikkeella",
+    "image": "/recipes/tomato-pasta.jpg",
+    "ingredients": [
+      {
+        "id": "tomato-pasta-0",
+        "name": "Fresh pasta",
+        "query": "fresh pasta",
+        "amountKg": 0.8,
+        "preferredIds": ["466360", "469966"],
+        "sourceText": "0,800 kg tuorepastaa",
+        "water": false
+      },
+      {
+        "id": "tomato-pasta-1",
+        "name": "Carrot strips",
+        "query": "carrot strips",
+        "amountKg": 0.625,
+        "preferredIds": ["472473"],
+        "sourceText": "0,625 kg porkkanasuikaleita, pakaste",
+        "water": false
+      },
+      {
+        "id": "tomato-pasta-2",
+        "name": "Tomato sauce",
+        "query": "basilico sauce",
+        "amountKg": 0.4,
+        "preferredIds": ["468943"],
+        "sourceText": "0,400 kg tomaattikastiketta",
+        "water": false
+      },
+      {
+        "id": "tomato-pasta-3",
+        "name": "Basil",
+        "query": "fresh basil",
+        "amountKg": null,
+        "preferredIds": [],
+        "sourceText": "0 kg hienonnettua basilikaa",
+        "water": false
+      },
+      {
+        "id": "tomato-pasta-4",
+        "name": "Emmental 17%",
+        "query": "Valio Emmental 17",
+        "amountKg": 0.05,
+        "preferredIds": ["476875"],
+        "sourceText": "0,050 kg Valio Emmental punaleimaa 17 % lastuina",
+        "water": false
+      },
+      {
+        "id": "tomato-pasta-5",
+        "name": "Black pepper",
+        "query": "black pepper",
+        "amountKg": null,
+        "preferredIds": [],
+        "sourceText": "0 kg mustapippuria myllystä",
+        "water": false
+      },
+      {
+        "id": "tomato-pasta-6",
+        "name": "Basil to finish",
+        "query": "fresh basil",
+        "amountKg": null,
+        "preferredIds": [],
+        "sourceText": "0 kg tuoretta basilikaa",
+        "water": false
+      }
+    ]
+  },
+  {
+    "id": "palermo",
+    "title": "Palermo vegetable pasta",
+    "description": "Wholegrain pasta with a creamy cheese sauce.",
+    "method": "Oven-baked",
+    "tags": ["pasta", "vegetarian", "cheese", "creamy", "oven", "lunch"],
+    "basePortions": 16,
+    "source": "https://www.valioaimo.fi/reseptit/palermon-kasvispasta/",
+    "sourceTitle": "Palermon kasvispasta",
+    "image": "/recipes/palermo.jpg",
+    "ingredients": [
+      {
+        "id": "palermo-0",
+        "name": "Gold&Green strips",
+        "query": "Gold Green strips",
+        "amountKg": 0.8,
+        "preferredIds": [],
+        "sourceText": "0,800 kg Valio Gold&Green® suikaleita Original",
+        "water": false
+      },
+      {
+        "id": "palermo-1",
+        "name": "Water",
+        "query": "",
+        "amountKg": 1.7,
+        "preferredIds": [],
+        "sourceText": "1,700 kg kylmää vettä",
+        "water": true
+      },
+      {
+        "id": "palermo-2",
+        "name": "Cooking cream alternative 15%",
+        "query": "Valio cooking cream alternative 15",
+        "amountKg": 1.0,
+        "preferredIds": [],
+        "sourceText": "1,000 kg Valio Ruoka 15 % laktoositon",
+        "water": false
+      },
+      {
+        "id": "palermo-3",
+        "name": "Cold-soluble starch",
+        "query": "cold starch",
+        "amountKg": 0.12,
+        "preferredIds": ["466030"],
+        "sourceText": "0,120 kg kylmätärkkelystä",
+        "water": false
+      },
+      {
+        "id": "palermo-4",
+        "name": "Curry powder",
+        "query": "curry powder",
+        "amountKg": 0.005,
+        "preferredIds": [],
+        "sourceText": "0,005 kg currya",
+        "water": false
+      },
+      {
+        "id": "palermo-5",
+        "name": "Dried tarragon",
+        "query": "tarragon",
+        "amountKg": 0.001,
+        "preferredIds": [],
+        "sourceText": "0,001 kg kuivattua rakuunaa",
+        "water": false
+      },
+      {
+        "id": "palermo-6",
+        "name": "Garlic powder",
+        "query": "garlic powder",
+        "amountKg": 0.003,
+        "preferredIds": [],
+        "sourceText": "0,003 kg valkosipulijauhetta",
+        "water": false
+      },
+      {
+        "id": "palermo-7",
+        "name": "Sugar",
+        "query": "sugar",
+        "amountKg": 0.01,
+        "preferredIds": [],
+        "sourceText": "0,010 kg hienoa sokeria",
+        "water": false
+      },
+      {
+        "id": "palermo-8",
+        "name": "Turmeric",
+        "query": "turmeric",
+        "amountKg": 0.002,
+        "preferredIds": [],
+        "sourceText": "0,002 kg kurkumaa",
+        "water": false
+      },
+      {
+        "id": "palermo-9",
+        "name": "Vegetable stock powder",
+        "query": "vegetable bouillon powder",
+        "amountKg": 0.03,
+        "preferredIds": [],
+        "sourceText": "0,030 kg vähäsuolaista kasvisliemijauhetta",
+        "water": false
+      },
+      {
+        "id": "palermo-10",
+        "name": "Salt",
+        "query": "salt",
+        "amountKg": 0.021,
+        "preferredIds": [],
+        "sourceText": "0,021 kg suolaa",
+        "water": false
+      },
+      {
+        "id": "palermo-11",
+        "name": "Black pepper",
+        "query": "black pepper",
+        "amountKg": 0.003,
+        "preferredIds": [],
+        "sourceText": "0,003 kg rouhittua mustapippuria",
+        "water": false
+      },
+      {
+        "id": "palermo-12",
+        "name": "Paprika powder",
+        "query": "paprika powder",
+        "amountKg": 0.002,
+        "preferredIds": [],
+        "sourceText": "0,002 kg paprikajauhetta",
+        "water": false
+      },
+      {
+        "id": "palermo-13",
+        "name": "Koskenlaskija processed cheese",
+        "query": "Koskenlaskija processed cheese",
+        "amountKg": 0.4,
+        "preferredIds": [],
+        "sourceText": "0,400 kg Valio Koskenlaskija® sulatejuustoa laktoositon",
+        "water": false
+      },
+      {
+        "id": "palermo-14",
+        "name": "Frozen diced onion",
+        "query": "onion diced frozen",
+        "amountKg": 0.2,
+        "preferredIds": [],
+        "sourceText": "0,200 kg pakastesipulikuutioita",
+        "water": false
+      },
+      {
+        "id": "palermo-15",
+        "name": "Wholegrain pasta",
+        "query": "wholegrain pasta",
+        "amountKg": 0.8,
+        "preferredIds": ["461582"],
+        "sourceText": "0,800 kg täysjyväpastaa",
+        "water": false
+      },
+      {
+        "id": "palermo-16",
+        "name": "Grated cheese blend",
+        "query": "Valio grated cheese",
+        "amountKg": 0.1,
+        "preferredIds": [],
+        "sourceText": "0,100 kg Valio juustoraasteseosta",
+        "water": false
+      }
+    ]
+  },
+  {
+    "id": "chicken-pasta",
+    "title": "Sweet chilli chicken pasta",
+    "description": "Chicken, peppers and wholegrain pasta.",
+    "method": "Oven-baked",
+    "tags": ["pasta", "chicken", "pepper", "spicy", "oven", "lunch"],
+    "basePortions": 24,
+    "source": "https://www.valioaimo.fi/reseptit/paholaisen-kanapasta-kylmavalmistus/",
+    "sourceTitle": "Paholaisen kanapasta kylmävalmistus",
+    "image": "/recipes/chicken-pasta.jpg",
+    "ingredients": [
+      {
+        "id": "chicken-pasta-0",
+        "name": "Water",
+        "query": "",
+        "amountKg": 2.1,
+        "preferredIds": [],
+        "sourceText": "2,100 kg kylmää vettä",
+        "water": true
+      },
+      {
+        "id": "chicken-pasta-1",
+        "name": "Cooking cream alternative 15%",
+        "query": "Valio cooking cream alternative 15",
+        "amountKg": 0.8,
+        "preferredIds": [],
+        "sourceText": "0,800 kg Valio Ruoka 15 % laktoositon",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-2",
+        "name": "Cold-soluble starch",
+        "query": "cold starch",
+        "amountKg": 0.13,
+        "preferredIds": ["466030"],
+        "sourceText": "0,130 kg kylmätärkkelystä",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-3",
+        "name": "Salt",
+        "query": "salt",
+        "amountKg": 0.019,
+        "preferredIds": [],
+        "sourceText": "0,019 kg suolaa",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-4",
+        "name": "Black pepper",
+        "query": "black pepper",
+        "amountKg": 0.002,
+        "preferredIds": [],
+        "sourceText": "0,002 kg rouhittua mustapippuria",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-5",
+        "name": "Koskenlaskija processed cheese",
+        "query": "Koskenlaskija processed cheese",
+        "amountKg": 0.3,
+        "preferredIds": [],
+        "sourceText": "0,300 kg Valio Koskenlaskija® sulatejuustoa laktoositon",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-6",
+        "name": "Frozen diced onion",
+        "query": "onion diced frozen",
+        "amountKg": 0.2,
+        "preferredIds": [],
+        "sourceText": "0,200 kg pakastesipulikuutioita",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-7",
+        "name": "Frozen diced peppers",
+        "query": "pepper diced frozen",
+        "amountKg": 0.2,
+        "preferredIds": [],
+        "sourceText": "0,200 kg pakaste paprikakuutioita",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-8",
+        "name": "Valio Paholainen pepper filling",
+        "query": "Valio pepper filling",
+        "amountKg": 0.3,
+        "preferredIds": [],
+        "sourceText": "0,300 kg Valio paholaisen paprikatäytettä",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-9",
+        "name": "Dried basil",
+        "query": "dried basil",
+        "amountKg": 0.002,
+        "preferredIds": [],
+        "sourceText": "0,002 kg kuivattua basilikaa",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-10",
+        "name": "Chicken stock powder",
+        "query": "chicken bouillon powder",
+        "amountKg": 0.015,
+        "preferredIds": [],
+        "sourceText": "0,015 kg vähäsuolaista kanaliemijauhetta",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-11",
+        "name": "Wholegrain pasta",
+        "query": "wholegrain pasta",
+        "amountKg": 0.8,
+        "preferredIds": ["461582"],
+        "sourceText": "0,800 kg täysjyväpastaa",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-12",
+        "name": "Cooked chicken strips",
+        "query": "cooked chicken strips",
+        "amountKg": 1.0,
+        "preferredIds": [],
+        "sourceText": "1,000 kg kypsää broilerin fileesuikaletta",
+        "water": false
+      },
+      {
+        "id": "chicken-pasta-13",
+        "name": "Grated cheese blend",
+        "query": "Valio grated cheese",
+        "amountKg": 0.1,
+        "preferredIds": [],
+        "sourceText": "0,100 kg Valio juustoraasteseosta",
+        "water": false
+      }
+    ]
+  }
+]

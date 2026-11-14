@@ -76,8 +76,13 @@ export function packText(p: StoreProduct) {
     : `Sold by ${unitLabel(p.salesUnit)}${p.pack.factor && p.pack.factor > 1 ? ` · ${p.pack.factor} base units` : ""}`;
 }
 export { purchaseStep as minimum } from "./cart";
-export async function api<T>(path: string, body?: unknown): Promise<T> {
+export async function api<T>(
+  path: string,
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
   const r = await fetch(`/api/shop/${path}`, {
+    signal,
     method: body === undefined ? "GET" : "POST",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),

@@ -11,9 +11,17 @@ The storefront uses a local demo buyer through a buyer-only server proxy. Produc
 Browser verification reached a held human-review proposal, with existing category and weekly-budget holds still enforced. Local tests also exercise the established approval/order/ledger flow. No real supplier fulfilment, public deployment, or new telephone integration was exercised. See `SMART-WEBSHOP-DEMO.md` for setup and evaluation limits.
 
 
-The current planned direction is the full-catalogue smart webshop described in [SMART-WEBSHOP-PLAN.md](SMART-WEBSHOP-PLAN.md). Hybrid search, model-based intent, catalogue-wide images and the new storefront-to-cart integration remain planned, not implemented. The prototype limitations below describe the app that currently runs.
+The sections below record earlier implementation stages where explicitly labelled. The current storefront supersedes those UI previews; catalogue-wide photography and production buyer authentication are still outstanding.
 
-## Chef interface preview — 14 November 2026
+## Current live recipe workspace
+
+Three curated recipes were read from Valio Aimo's public recipe pages on 14 November 2026, separately from the hackathon catalogue: [tomato and basil pasta](https://www.valioaimo.fi/reseptit/tuorepastaa-tomaatti-basilikakastikkeella/), [Palermo vegetable pasta](https://www.valioaimo.fi/reseptit/palermon-kasvispasta/), and [sweet chilli chicken pasta](https://www.valioaimo.fi/reseptit/paholaisen-kanapasta-kylmavalmistus/). Published yields and ingredient weights are retained in `packages/discovery/src/recipes-data.json`; official photo provenance is in `apps/web/public/recipes/sources.json`. The browser offers these three recipes only. It does not crawl new recipes or generate unreviewed ingredient quantities.
+
+Recipe matching and bounded portion/pantry interpretation run locally as text changes. These are explicit supported operations, not an unrestricted conversational agent. Gemini is used for background product-query interpretation. Saved baskets in this browser provide the only preference history; real customer purchases and inventory are not connected. Recipe ingredients are mapped to reviewed product candidates where available, and the chef can change them. A candidate match does not certify whole-meal dietary suitability. No automatic KG-to-L density conversion is used. Missing source amounts and missing verified pack contents require manual quantities.
+
+The [OpenUI renderer](https://www.openui.com/docs/openui-lang/renderer) was reviewed. No OpenUI dependency or generated UI language is installed: the application already renders typed React recipe/product/quantity controls. The revised visual design does not change the localhost-only authentication boundary or make the application production-ready. Prices remain explicitly marked as sample data in mock mode.
+
+## Historical chef interface preview — superseded
 
 - The root page is now a local chef design preview; the existing authenticated gateway dashboard is at `/operations`. Its approval/order/voice behavior is retained.
 - The chef screen uses ten real product identities and supplier claims extracted from the supplied catalogue. Prices, availability (including one deliberate stock-out), and recipe quantities are explicit UI fixtures, not supplier offers or a reviewed recipe. It uses no production inventory, payment, or order endpoint.
@@ -37,7 +45,7 @@ The supplied plan is preserved unchanged in `docs/PLAN.md`. It contains an aspir
 - Supplier offsetless timestamps use Europe/Helsinki, including daylight saving. Date-only price expiry includes the full Helsinki day. Requested delivery dates must match the signed offers.
 - Required dietary/allergen claims need positive declarations. Lactose-free is not milk-allergen-free. Empty declarations remain unknown. Strict substitutions also preserve the original product’s positive free-from declarations.
 - Reliability and carbon are comparison signals, not promises. Missing signals are absent. No approximate order-level carbon total is presented; the plan’s dairy-density estimate is therefore not used.
-- Category display uses supplied codes because names are absent. Search is deterministic Finnish/English substring/token ranking, with a documented milk-category preference. PostgreSQL full-text ingestion is provided, but serving search uses the normalized in-memory catalog. No embedding model or pgvector search is required or enabled.
+- Official category labels are absent. Current discovery combines an immediate in-memory suggestion path with background PGlite full-text/trigram and optional local pgvector retrieval. The older catalogue endpoint remains deterministic; neither search path changes supplier declarations.
 
 ## Authority and approvals
 

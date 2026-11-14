@@ -11,6 +11,126 @@
     }
   ],
   "paths": {
+    "/v1/discovery/suggest": {
+      "post": {
+        "summary": "Instant product suggestions without model calls or vector initialization",
+        "security": [
+          {
+            "AgentBearer": []
+          },
+          {
+            "HttpSignature": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "group": {
+                    "default": "All products",
+                    "type": "string",
+                    "enum": [
+                      "All products",
+                      "Dairy & eggs",
+                      "Meat & fish",
+                      "Fruit & vegetables",
+                      "Bakery",
+                      "Pantry",
+                      "Drinks",
+                      "Other"
+                    ]
+                  },
+                  "category": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "brand": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "claims": {
+                    "default": [],
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "FREE_FROM_LACTOSE",
+                        "FREE_FROM_GLUTEN",
+                        "VEGAN",
+                        "ORGANIC",
+                        "VEGETARIAN"
+                      ]
+                    }
+                  },
+                  "page": {
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000
+                  },
+                  "limit": {
+                    "default": 24,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 48
+                  },
+                  "smart": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "query",
+                  "group",
+                  "claims",
+                  "page",
+                  "limit",
+                  "smart"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Scope or identity refused"
+          },
+          "409": {
+            "description": "Conflict or revalidation required"
+          },
+          "502": {
+            "description": "Supplier unavailable"
+          }
+        }
+      }
+    },
     "/v1/discovery/context": {
       "get": {
         "summary": "Current buyer delivery context; catalogue scope required",

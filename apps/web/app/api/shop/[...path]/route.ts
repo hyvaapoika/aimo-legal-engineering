@@ -6,6 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const routes: Record<string, string> = {
   search: "discovery/search",
+  suggest: "discovery/suggest",
   compare: "discovery/compare",
   alternatives: "discovery/alternatives",
   context: "discovery/context",

@@ -28,91 +28,14 @@ import {
 export * from "./model";
 export const contentHash = (p: Product) =>
   createHash("sha256").update(documentFor(p)).digest("hex");
-const synonyms: Record<string, string> = {
-  kerma: "cream",
-  ruokakerma: "cooking cream",
-  kuohukerma: "whipping cream",
-  maito: "milk",
-  voi: "butter",
-  juusto: "cheese",
-  jogurtti: "yogurt",
-  peruna: "potato",
-  kananmuna: "egg",
-  jauho: "flour",
-  kana: "chicken",
-  lohi: "salmon",
-  jogurt: "yogurt",
-  yoghurt: "yogurt",
-  tomaatit: "tomatoes",
-  tomaatti: "tomato",
-  penne: "penne",
-  laktoositon: "lactose free",
-  gluteeniton: "gluten free",
-  vegaaninen: "vegan",
-};
-export function basicIntent(query: string): Intent {
-  let q = normalize(query);
-  const claims: Intent["claims"] = [];
-  const unresolved: string[] = [];
-  if (
-    /\b(not|without|no)\s+(lactose free|gluten free|vegan|organic|vegetarian)|\b(non vegan)\b/.test(
-      q,
-    )
-  )
-    unresolved.push("Negative dietary preference needs review.");
-  if (
-    /\b(nut free|peanut free|dairy free|milk free|allergy|allergies|allergen|allergens|pahkinaton|maidoton)\b/.test(
-      q,
-    )
-  )
-    unresolved.push(
-      "This allergen restriction needs explicit supplier evidence.",
-    );
-  if (
-    /\b(without|except|exclude|excluding|avoid|avoiding|no|not|less|under|below|tomorrow|today|budget|sugar free|low fat|halal|kosher)\b/.test(
-      q,
-    ) ||
-    /[€$]/.test(query)
-  )
-    unresolved.push(
-      "This extra requirement cannot be applied automatically. Edit your search or use the product details to check it.",
-    );
-  for (const [rx, claim] of [
-    [/\b(lactose free|lactosefree|laktoositon)\b/, "FREE_FROM_LACTOSE"],
-    [/\b(gluten free|glutenfree|gluteeniton)\b/, "FREE_FROM_GLUTEN"],
-    [/\b(vegan|vegaaninen)\b/, "VEGAN"],
-    [/\b(organic|luomu)\b/, "ORGANIC"],
-    [/\bvegetarian\b/, "VEGETARIAN"],
-  ] as const)
-    if (rx.test(q)) {
-      if (!unresolved.some((x) => x.startsWith("Negative"))) claims.push(claim);
-      q = q.replace(rx, " ");
-    }
-  if (/\bfree\b/.test(q))
-    unresolved.push(
-      "This free-from requirement is not supported by an explicit catalogue filter.",
-    );
-  const preferredPack =
-    query
-      .toLowerCase()
-      .match(
-        /\b\d+(?:[.,]\d+)?\s*(?:kg|litres?|liters?|litre|liter|l|g|ml)\b/,
-      )?.[0] ?? null;
-  q = q.replace(/\b\d+(?:[.,]\d+)?\s*(?:kg|litres?|liters?|l|g|ml)\b/g, " ");
-  q = q.replace(
-    /\b(i|need|want|please|find|show|me|some|for|around|about|a|an|the|of|products?|by|tomorrow)\b/g,
-    " ",
-  );
-  const terms = q
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((t) => synonyms[t] || t);
-  return { terms, claims, preferredPack, unresolved };
-}
+import { basicIntent } from "./intent";
+export { basicIntent } from "./intent";
 export class Discovery {
   private db = new PGlite({ extensions: { vector, pg_trgm } });
   private ready: Promise<void>;
   private embedded = 0;
+  private quickRecords: { product: Product; words: string; label: string }[] =
+    [];
   private hashes = new Map<string, string>();
   private mtime = 0;
   private refreshing?: Promise<void>;
@@ -124,6 +47,13 @@ export class Discovery {
     readonly catalog: Catalog,
     private embeddingPath?: string,
   ) {
+    this.quickRecords = catalog.products.map((p) => ({
+      product: p,
+      label: normalize(name(p)),
+      words: normalize(
+        `${p.id} ${p.gtin || ""} ${Object.values(p.names).join(" ")} ${p.brand}`,
+      ),
+    }));
     this.hashes = new Map(catalog.products.map((p) => [p.id, contentHash(p)]));
     this.ready = this.init();
   }
@@ -313,6 +243,20 @@ export class Discovery {
           .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
       }
     }
+    return this.finish(input, intent, rows, mode, !!exact);
+  }
+  private finish(
+    input: SearchRequest,
+    intent: Intent,
+    rows: { id: string; score: number }[],
+    mode: string,
+    exact = false,
+  ) {
+    const q = intent.terms
+      .flatMap((t) => normalize(t).split(" "))
+      .filter(Boolean)
+      .join(" ");
+    const claims = [...new Set([...input.claims, ...intent.claims])];
     // Explicit product-type interpretation outranks incidental textual mentions.
     const desired = [
       "cooking cream",
@@ -401,6 +345,49 @@ export class Discovery {
       refinements,
       unresolved: intent.unresolved,
     };
+  }
+  // Keystroke path: no database initialization, vector reads, or provider calls.
+  suggest(raw: unknown) {
+    const input = searchInput.parse(raw),
+      intent = basicIntent(input.query);
+    const required = [...new Set([...input.claims, ...intent.claims])];
+    const tokens = intent.terms
+      .flatMap((t) => normalize(t).split(" "))
+      .filter(Boolean);
+    const exact = this.catalog.products.find(
+      (p) =>
+        input.query &&
+        (p.id === input.query ||
+          p.gtin === input.query ||
+          p.packs.some((x) => x.gtin === input.query)),
+    );
+    const rows: { id: string; score: number }[] = [];
+    if (!intent.unresolved.length && (!/^\d{6,}$/.test(input.query) || exact)) {
+      for (const r of this.quickRecords) {
+        const p = r.product;
+        if (exact && exact.id !== p.id) continue;
+        if (
+          !required.every((c) => hasClaim(p, c)) ||
+          (input.brand && p.brand !== input.brand) ||
+          (input.category && p.category !== input.category) ||
+          (input.group !== "All products" && groupFor(p) !== input.group)
+        )
+          continue;
+        if (!exact && !tokens.every((t) => r.words.includes(t))) continue;
+        rows.push({
+          id: p.id,
+          score: exact
+            ? 1000
+            : tokens.reduce(
+                (sum, t) => sum + (r.label.includes(t) ? 10 : 1),
+                0,
+              ) +
+              (tokens.length && r.label.includes(tokens.join(" ")) ? 20 : 0),
+        });
+      }
+      rows.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+    }
+    return this.finish(input, intent, rows, "instant", !!exact);
   }
   compare(ids: string[]) {
     if (ids.length < 1 || ids.length > 3)

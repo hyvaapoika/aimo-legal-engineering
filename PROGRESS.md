@@ -12,6 +12,16 @@
 
 Scope: local working hackathon application. Hosted provider checks and public deployment are recorded separately from local verification.
 
+## Live chef workspace and search latency — 14 November 2026
+
+- Removed the large promotional hero, local/hackathon banners and repeated explanatory copy. One conversational composer drives recipe cards, an editable ingredient workspace and the existing catalogue/basket controls. Small sample-price labels remain where money is shown.
+- Added synchronous, deterministic `/v1/discovery/suggest` with a 180 ms typing debounce. It does not await Gemini, embeddings or the PGlite index. Background hybrid refinement starts after 900 ms idle; stale responses are ignored, and results do not silently reorder after interaction. Six measured localhost proxy requests returned in 20–73 ms (not a production SLA).
+- Added three sourced Valio Aimo pasta recipes, published yields/ingredient weights and official recipe photographs. Matches render locally while typing; this is a curated recipe collection, not arbitrary recipe generation or a complete recipe search engine.
+- Portion and pantry follow-ups update visible controls; verified KG pack contents determine rounding. Unspecified amounts, unknown pack contents and KG-to-litre conversions require a choice. Explicit dietary requirements remain attached to basket lines. Actual saved baskets influence recipe/product preferences; no customer order history is invented.
+- Browser-tested 80 → 120 portions, “I already have pasta and carrots,” selected-only add-to-basket, and lactose-free persistence through a subsequent portion change. Commercial checks and human approval remain unchanged.
+- Verification: `pnpm check` passed (136 tests plus the purchasing demo, ledger 17/17); `pnpm build` passed. Desktop 1440 px and mobile 390 px browser checks passed, including no mobile horizontal overflow. Screenshots are in `.local/live-recipes-desktop.png`, `.local/live-recipes-mobile.png` and `.local/live-ingredient-workspace.png`.
+- OpenUI was researched but not added: typed React components already render these bounded interactions. Model-generated layouts are unnecessary for this flow. Gemini remains advisory for catalogue intent.
+
 ## Full-catalogue smart webshop implementation — 14 November 2026
 
 - Replaced the ten-product homepage with the Valio-style full catalogue: search, URL filters, brand/dietary controls, details, comparison tray, editable basket, saved baskets, explicit replacements and Undo.

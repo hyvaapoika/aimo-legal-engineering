@@ -275,6 +275,9 @@ export function createApp(
       }).format(service.now()),
     }),
   );
+  app.post("/v1/discovery/suggest", async (c) =>
+    c.json(service.discovery.suggest(await c.req.json())),
+  );
   app.post("/v1/discovery/search", async (c) =>
     c.json(await service.discovery.search(await c.req.json())),
   );
