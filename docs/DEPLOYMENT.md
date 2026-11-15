@@ -7,10 +7,11 @@ https://junction-repo-production.up.railway.app in Railway project
 `truthful-cat`, service `junction-repo`. The deployment uses a 500 MB persistent
 volume because that is the current plan's volume limit. The full catalogue is
 bundled with the app, so the volume holds the business database and ledger.
-Health, catalogue count, public demo sign-in, storefront context, and a read-only
-Valio challenge offer lookup were verified on 15 November 2026. The complete
-remote purchasing journey was not written to the shared public ledger during
-verification.
+Health, catalogue count, public demo sign-in, storefront context, read-only
+Valio challenge offers, and public milk/butter search were verified on 15
+November 2026. Search stayed online after the memory fix; measured service
+memory reached 811 MB of the 1,024 MB limit. The complete remote purchasing
+journey was not written to the shared public ledger during verification.
 
 This Railway profile hosts the complete supplied 17,546-record catalogue and the
 webshop, purchasing agent, MCP gateway, approval workspace, and simulated order
