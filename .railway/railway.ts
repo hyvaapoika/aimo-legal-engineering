@@ -9,7 +9,7 @@ import {
 
 export default defineRailway(() => {
   const state = volume("aimo-state", {
-    region: "europe-west4",
+    region: "sfo",
     sizeMB: 500,
   });
 

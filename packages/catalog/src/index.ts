@@ -244,16 +244,21 @@ export class Catalog {
       );
     return p;
   }
+  *matching(input: SearchInput): Generator<Product> {
+    const tokens = normalize(input.query).split(/\s+/).filter(Boolean);
+    for (const p of this.products) {
+      if (
+        (!input.category || p.category === input.category) &&
+        input.claims.every((c) => p.claims.includes(c)) &&
+        input.allergenFree.every((a) => p.allergenFree.includes(a)) &&
+        tokens.every((t) => this.text.get(p.id)!.includes(t))
+      )
+        yield p;
+    }
+  }
   search(input: SearchInput): Product[] {
     const tokens = normalize(input.query).split(/\s+/).filter(Boolean);
-    return this.products
-      .filter(
-        (p) =>
-          (!input.category || p.category === input.category) &&
-          input.claims.every((c) => p.claims.includes(c)) &&
-          input.allergenFree.every((a) => p.allergenFree.includes(a)) &&
-          tokens.every((t) => this.text.get(p.id)!.includes(t)),
-      )
+    return [...this.matching(input)]
       .map((p) => ({
         p,
         score:

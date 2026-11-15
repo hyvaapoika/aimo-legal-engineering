@@ -31,9 +31,7 @@ export class Discovery {
   private db?: import("@electric-sql/pglite").PGlite;
   private ready?: Promise<void>;
   private embedded = 0;
-  private quickRecords: { product: Product; words: string; label: string }[] =
-    [];
-  private hashes = new Map<string, string>();
+  private hashes?: Map<string, string>;
   private mtime = 0;
   private refreshing?: Promise<void>;
   private cache = new Map<
@@ -43,16 +41,7 @@ export class Discovery {
   constructor(
     readonly catalog: Catalog,
     private embeddingPath?: string,
-  ) {
-    this.quickRecords = catalog.products.map((p) => ({
-      product: p,
-      label: normalize(name(p)),
-      words: normalize(
-        `${p.id} ${p.gtin || ""} ${Object.values(p.names).join(" ")} ${p.brand}`,
-      ),
-    }));
-    this.hashes = new Map(catalog.products.map((p) => [p.id, contentHash(p)]));
-  }
+  ) {}
   private ensureReady() {
     return (this.ready ??= this.init());
   }
@@ -101,6 +90,9 @@ export class Discovery {
     const path = this.embeddingPath;
     const info = await stat(path).catch(() => undefined);
     if (!info || info.mtimeMs === this.mtime) return;
+    const hashes = (this.hashes ??= new Map(
+      this.catalog.products.map((p) => [p.id, contentHash(p)]),
+    ));
     const records = (await readFile(path, "utf8"))
       .split("\n")
       .flatMap((line) => {
@@ -110,7 +102,7 @@ export class Discovery {
           if (
             p &&
             r.model === embeddingModel &&
-            r.hash === this.hashes.get(p.id)
+            r.hash === hashes.get(p.id)
           )
             return [{ id: r.id, v: normalizeVector(r.values) }];
         } catch {}
@@ -409,8 +401,17 @@ export class Discovery {
     );
     const rows: { id: string; score: number }[] = [];
     if (!intent.unresolved.length && (!/^\d{6,}$/.test(input.query) || exact)) {
-      for (const r of this.quickRecords) {
-        const p = r.product;
+      const query = tokens.join(" ");
+      const candidates = exact
+        ? [exact]
+        : this.catalog.matching({
+            query,
+            category: input.category,
+            claims: required,
+            allergenFree: [],
+            limit: input.limit,
+          });
+      for (const p of candidates) {
         if (exact && exact.id !== p.id) continue;
         if (
           !required.every((c) => hasClaim(p, c)) ||
@@ -419,16 +420,16 @@ export class Discovery {
           (input.group !== "All products" && groupFor(p) !== input.group)
         )
           continue;
-        if (!exact && !tokens.every((t) => r.words.includes(t))) continue;
+        const label = normalize(name(p));
         rows.push({
           id: p.id,
           score: exact
             ? 1000
             : tokens.reduce(
-                (sum, t) => sum + (r.label.includes(t) ? 10 : 1),
+                (sum, t) => sum + (label.includes(t) ? 10 : 1),
                 0,
               ) +
-              (tokens.length && r.label.includes(tokens.join(" ")) ? 20 : 0),
+              (tokens.length && label.includes(query) ? 20 : 0),
         });
       }
       rows.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
