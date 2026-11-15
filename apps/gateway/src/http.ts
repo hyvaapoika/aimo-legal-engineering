@@ -1,6 +1,7 @@
 import { KitchenAgent, publicPlan } from "./purchasing/agent.js";
 import { planRefSchema } from "../../../packages/purchasing/src/contracts";
 import { Hono } from "hono";
+import { proxy } from "hono/proxy";
 import { bodyLimit } from "hono/body-limit";
 import { z, ZodError } from "zod";
 import {
@@ -410,7 +411,7 @@ export function createApp(
     ),
   );
   app.post("/admin/demo", async (c) => {
-    if (!config.demo)
+    if (!config.demo && !config.publicDemo)
       throw new DomainError(
         "DEMO_DISABLED",
         "Scenario generation is only enabled in local mock mode.",
@@ -449,7 +450,7 @@ export function createApp(
     return c.json({ ok: true });
   });
   app.post("/admin/demo/purchase", async (c) => {
-    if (!config.demo)
+    if (!config.demo && !config.publicDemo)
       throw new DomainError(
         "DEMO_DISABLED",
         "Only available in the local mock demo.",
@@ -475,8 +476,24 @@ export function createApp(
       "Content-Disposition": `attachment; filename="${order.id}.xml"`,
     });
   });
-  app.notFound((c) =>
-    c.json({ code: "NOT_FOUND", message: "Endpoint not found." }, 404),
-  );
+  app.notFound((c) => {
+    if (!config.proxyWeb)
+      return c.json({ code: "NOT_FOUND", message: "Endpoint not found." }, 404);
+    const incoming = new URL(c.req.url);
+    const target = new URL(
+      incoming.pathname + incoming.search,
+      `http://127.0.0.1:${config.webPort}`,
+    );
+    const originalHost =
+      c.req.header("x-forwarded-host") || c.req.header("host");
+    const headers = {
+      ...c.req.header(),
+      ...(originalHost
+        ? { host: originalHost, "x-forwarded-host": originalHost }
+        : {}),
+      "x-forwarded-proto": c.req.header("x-forwarded-proto") || "https",
+    };
+    return proxy(target, { raw: c.req.raw, headers });
+  });
   return app;
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { publicDemoLoginEnabled, requestOriginMatches } from "../demo-mode";
+import { publicDemoRateLimit } from "../public-demo-limit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const adminToken = () =>
@@ -34,9 +36,21 @@ async function handler(
       { message: "Set ADMIN_TOKEN on the web server." },
       { status: 503 },
     );
+  const rateBucket =
+    route === "session" ? "admin:session" : `admin:${request.method}:${route}`;
+  const limit = publicDemoRateLimit(
+    request,
+    rateBucket,
+    route === "session" ? 6 : route === "snapshot" ? 120 : 30,
+  );
+  if (!limit.allowed)
+    return NextResponse.json(
+      { message: "The shared demo is busy. Please retry shortly." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
   if (!["GET", "HEAD"].includes(request.method)) {
     const origin = request.headers.get("origin");
-    if (!origin || origin !== request.nextUrl.origin)
+    if (!requestOriginMatches(origin, request.nextUrl.origin))
       return NextResponse.json(
         { message: "Cross-origin request refused." },
         { status: 403 },
@@ -47,10 +61,11 @@ async function handler(
     if (
       typeof input.token !== "string" ||
       input.token.length > 1000 ||
-      !equal(
-        createHmac("sha256", "compare").update(input.token).digest("hex"),
-        createHmac("sha256", "compare").update(adminToken()).digest("hex"),
-      )
+      (!publicDemoLoginEnabled(input.token) &&
+        !equal(
+          createHmac("sha256", "compare").update(input.token).digest("hex"),
+          createHmac("sha256", "compare").update(adminToken()).digest("hex"),
+        ))
     )
       return NextResponse.json(
         { message: "Incorrect access token." },
@@ -83,7 +98,7 @@ async function handler(
     return NextResponse.json({ message: "Unknown route." }, { status: 404 });
   try {
     const upstream = await fetch(
-      `${process.env.GATEWAY_URL || "http://localhost:4000"}/admin/${route}${request.nextUrl.search}`,
+      `${process.env.GATEWAY_URL || `http://127.0.0.1:${process.env.PORT || 4000}`}/admin/${route}${request.nextUrl.search}`,
       {
         method: request.method,
         headers: {

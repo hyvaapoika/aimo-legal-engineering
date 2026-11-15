@@ -50,7 +50,13 @@ const nav: { id: View; name: string; icon: typeof ShieldCheck }[] = [
   { id: "catalog", name: "Product catalog", icon: Search },
   { id: "discovery", name: "Developer access", icon: Code2 },
 ];
-export default function Dashboard({ demo }: { demo: boolean }) {
+export default function Dashboard({
+  demo,
+  publicDemo = false,
+}: {
+  demo: boolean;
+  publicDemo?: boolean;
+}) {
   const [runSignal, setRunSignal] = useState(0);
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const [auth, setAuth] = useState(false);
@@ -155,8 +161,9 @@ export default function Dashboard({ demo }: { demo: boolean }) {
             Clear authority.
           </h1>
           <p>
-            Sign in to manage your purchasing agents, review exceptions, and
-            follow every order.
+            {publicDemo
+              ? "Shared public sandbox. Every order is simulated, and changes are visible to other visitors. Do not enter confidential information."
+              : "Sign in to manage your purchasing agents, review exceptions, and follow every order."}
           </p>
           <form
             onSubmit={(e: FormEvent) => {
@@ -186,12 +193,17 @@ export default function Dashboard({ demo }: { demo: boolean }) {
               className="text-button demo-login"
               onClick={() =>
                 void act(async () => {
-                  await api("session", { token: "local-admin-demo" });
+                  await api("session", {
+                    token: publicDemo ? "public-demo" : "local-admin-demo",
+                  });
                   setAuth(true);
                 })
               }
             >
-              <FlaskConical size={15} /> Enter local demo workspace
+              <FlaskConical size={15} />
+              {publicDemo
+                ? "Enter public sandbox"
+                : "Enter local demo workspace"}
             </button>
           )}
           {error && (

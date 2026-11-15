@@ -7,6 +7,9 @@ export function configuration() {
     mock &&
     process.env.DEMO_MODE !== "false" &&
     process.env.NODE_ENV !== "production";
+  const publicDemo =
+    process.env.PUBLIC_DEMO_MODE === "true" &&
+    process.env.NODE_ENV === "production";
   const adminToken =
     process.env.ADMIN_TOKEN || (demo ? "local-admin-demo" : "");
   const agentToken =
@@ -30,15 +33,25 @@ export function configuration() {
       "Voice is disabled in this build. Use the verified app approval flow; see docs/ASSUMPTIONS.md.",
       500,
     );
+  const railwayOrigin = process.env.RAILWAY_PUBLIC_DOMAIN
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+    : undefined;
   return {
     mock,
     demo,
+    publicDemo,
     adminToken,
     agentToken,
     allowBearer: process.env.ALLOW_BEARER !== "false",
+    proxyWeb: process.env.PROXY_WEB === "true",
     port: Number(process.env.PORT || 4000),
-    publicUrl: process.env.PUBLIC_GATEWAY_URL || "http://localhost:4000",
-    webOrigin: process.env.WEB_ORIGIN || "http://localhost:3100",
+    webPort: Number(process.env.WEB_PORT || 3100),
+    publicUrl:
+      process.env.PUBLIC_GATEWAY_URL ||
+      railwayOrigin ||
+      "http://localhost:4000",
+    webOrigin:
+      process.env.WEB_ORIGIN || railwayOrigin || "http://localhost:3100",
     dataDir: resolve("data"),
     stateDir: resolve(process.env.STATE_DIR || ".local"),
     databaseUrl: process.env.DATABASE_URL || undefined,

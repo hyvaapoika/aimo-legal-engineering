@@ -78,10 +78,13 @@ export function input(offer: Offer, qty = 100): ProposalInput {
 export const testConfig: Configuration = {
   mock: true,
   demo: true,
+  publicDemo: false,
   adminToken: "test-admin",
   agentToken: "test-buyer",
   allowBearer: true,
+  proxyWeb: false,
   port: 0,
+  webPort: 3100,
   publicUrl: "http://localhost",
   webOrigin: "http://localhost:3000",
   dataDir: resolve("data"),

@@ -118,7 +118,7 @@ docker compose -f infra/docker-compose.yml up -d
 
 Set `DATABASE_URL=postgres://aimo:local-development-only@localhost:5432/aimo`. Tables and indexes are created idempotently on startup; spend checks, proposals, decisions, order insertion, and ledger writes share a transaction. External PostgreSQL uses a transaction-scoped advisory lock across gateway instances. This favors correctness and a clear demo over high throughput.
 
-For a container image, run `docker build -f infra/Dockerfile -t aimo-gateway .`. Set distinct non-demo credentials, `PUBLIC_GATEWAY_URL`, `WEB_ORIGIN`, and `GATEWAY_URL` to match your deployment, persist `.local` or supply `AIMO_SIGNING_KEY`, and use PostgreSQL for durable hosted data. Terminate HTTPS at your host/proxy, preserve the original signed request URI, and add your organization’s SSO before real customer use. No public deployment is created by this repository setup.
+For a container image, run `docker build -f infra/Dockerfile -t aimo-gateway .`. The Railway judge sandbox is configured in `.railway/railway.ts`; deployment steps and server-side secret handling are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). It serves the complete supplied catalogue and can use Valio's hosted challenge lookup API for synthetic prices and availability. Every proposal and order remains in this app's simulated ledger. The public sandbox is shared and grants demo approval access; it is not a production customer workspace. Use distinct credentials, durable storage, and real buyer authentication/tenant isolation before real customer use.
 
 ## Verification and evidence
 

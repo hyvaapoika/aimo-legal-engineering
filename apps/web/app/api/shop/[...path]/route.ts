@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "dotenv";
 import { resolve } from "node:path";
+import { requestOriginMatches, storeProxyEnabled } from "../../demo-mode";
+import { publicDemoRateLimit } from "../../public-demo-limit";
 config({ path: resolve(process.cwd(), "../../.env"), quiet: true });
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,12 +25,8 @@ async function handler(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> },
 ) {
-  // Explicit local demo buyer. This proxy never borrows human/admin authority.
-  if (
-    process.env.NODE_ENV === "production" ||
-    process.env.DEMO_MODE === "false" ||
-    !["localhost", "127.0.0.1", "[::1]"].includes(request.nextUrl.hostname)
-  )
+  // The public sandbox uses a server-only buyer credential. Orders remain simulated.
+  if (!storeProxyEnabled(request.nextUrl.hostname))
     return NextResponse.json(
       {
         message:
@@ -38,7 +36,10 @@ async function handler(
     );
   if (
     request.method === "POST" &&
-    request.headers.get("origin") !== request.nextUrl.origin
+    !requestOriginMatches(
+      request.headers.get("origin"),
+      request.nextUrl.origin,
+    )
   )
     return NextResponse.json(
       { message: "Cross-origin request refused." },
@@ -51,6 +52,16 @@ async function handler(
       { message: "Unknown shopping route." },
       { status: 404 },
     );
+  const limit = publicDemoRateLimit(
+    request,
+    `shop:${request.method}:${path}`,
+    path === "kitchen/start" ? 4 : path === "offers" ? 20 : 60,
+  );
+  if (!limit.allowed)
+    return NextResponse.json(
+      { message: "The shared demo is busy. Please retry shortly." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
   const body = request.method === "POST" ? await request.text() : undefined;
   if (body && body.length > (path === "kitchen/start" ? 4_500_000 : 100000))
     return NextResponse.json(
@@ -59,7 +70,7 @@ async function handler(
     );
   try {
     const upstream = await fetch(
-      `${process.env.GATEWAY_URL || "http://localhost:4000"}/v1/${route}`,
+      `${process.env.GATEWAY_URL || `http://127.0.0.1:${process.env.PORT || 4000}`}/v1/${route}`,
       {
         method: request.method,
         headers: {
