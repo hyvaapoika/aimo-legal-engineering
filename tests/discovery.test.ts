@@ -26,6 +26,27 @@ afterAll(async () => {
   await discovery.close();
 });
 describe("Grounded full catalogue discovery", () => {
+  it("keeps lightweight smart search on the catalogue path without starting PGlite", async () => {
+    const quick = new Discovery(catalog);
+    vi.stubEnv("GEMINI_API_KEY", "");
+    try {
+      const r = await quick.searchLightweight({
+        query: "lactose-free milk",
+        smart: true,
+      });
+      expect(r.mode).toBe("instant");
+      expect(r.products.length).toBeGreaterThan(0);
+      expect(
+        r.products.every((p) => p.claims.includes("FREE_FROM_LACTOSE")),
+      ).toBe(true);
+      expect(
+        (quick as unknown as { ready?: Promise<void> }).ready,
+      ).toBeUndefined();
+    } finally {
+      vi.unstubAllEnvs();
+      await quick.close();
+    }
+  });
   it("paginates all supplied records with no overlap", async () => {
     const a = await discovery.search({}),
       b = await discovery.search({ page: 2 });

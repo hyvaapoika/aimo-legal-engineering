@@ -297,9 +297,14 @@ export function createApp(
   app.post("/v1/discovery/suggest", async (c) =>
     c.json(service.discovery.suggest(await c.req.json())),
   );
-  app.post("/v1/discovery/search", async (c) =>
-    c.json(await service.discovery.search(await c.req.json())),
-  );
+  app.post("/v1/discovery/search", async (c) => {
+    const input = await c.req.json();
+    const result =
+      process.env.DISCOVERY_LIGHTWEIGHT === "true"
+        ? await service.discovery.searchLightweight(input)
+        : await service.discovery.search(input);
+    return c.json(result);
+  });
   app.post("/v1/discovery/compare", async (c) => {
     const x = z
       .object({ ids: z.array(z.string()).min(1).max(3) })

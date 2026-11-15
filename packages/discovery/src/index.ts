@@ -1,6 +1,3 @@
-import { PGlite } from "@electric-sql/pglite";
-import { vector } from "@electric-sql/pglite/vector";
-import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { readFile, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import type { Catalog } from "@aimo/catalog";
@@ -31,8 +28,8 @@ export const contentHash = (p: Product) =>
 import { basicIntent } from "./intent";
 export { basicIntent } from "./intent";
 export class Discovery {
-  private db = new PGlite({ extensions: { vector, pg_trgm } });
-  private ready: Promise<void>;
+  private db?: import("@electric-sql/pglite").PGlite;
+  private ready?: Promise<void>;
   private embedded = 0;
   private quickRecords: { product: Product; words: string; label: string }[] =
     [];
@@ -55,10 +52,18 @@ export class Discovery {
       ),
     }));
     this.hashes = new Map(catalog.products.map((p) => [p.id, contentHash(p)]));
-    this.ready = this.init();
+  }
+  private ensureReady() {
+    return (this.ready ??= this.init());
   }
   private async init() {
-    await this.db.exec(
+    const [{ PGlite }, { vector }, { pg_trgm }] = await Promise.all([
+      import("@electric-sql/pglite"),
+      import("@electric-sql/pglite/vector"),
+      import("@electric-sql/pglite/contrib/pg_trgm"),
+    ]);
+    const db = (this.db = new PGlite({ extensions: { vector, pg_trgm } }));
+    await db.exec(
       `CREATE EXTENSION vector; CREATE EXTENSION pg_trgm; CREATE TABLE products(id text PRIMARY KEY, label text, words text, group_name text, brand text, category text, claims text[], body tsvector); CREATE TABLE vectors(id text PRIMARY KEY, embedding vector(384));`,
     );
     for (let start = 0; start < this.catalog.products.length; start += 500) {
@@ -76,19 +81,20 @@ export class Discovery {
           claims: p.claims.filter((c) => hasClaim(p, c)),
           extra: normalize(documentFor(p)),
         }));
-      await this.db.query(
+      await db.query(
         `INSERT INTO products SELECT x->>'id',x->>'label',x->>'words',x->>'group',x->>'brand',x->>'category',ARRAY(SELECT jsonb_array_elements_text(x->'claims')),setweight(to_tsvector('simple',x->>'words'),'A')||setweight(to_tsvector('simple',x->>'extra'),'C') FROM jsonb_array_elements($1::jsonb) x`,
         [JSON.stringify(batch)],
       );
     }
-    await this.db.exec(
+    await db.exec(
       "CREATE INDEX search_words ON products USING gin(body); CREATE INDEX name_trigrams ON products USING gin(label gin_trgm_ops);",
     );
     await this.refresh();
   }
   async close() {
+    if (!this.ready) return;
     await this.ready;
-    await this.db.close();
+    await this.db?.close();
   }
   private async refresh() {
     if (!this.embeddingPath) return;
@@ -116,7 +122,7 @@ export class Discovery {
       this.mtime = info.mtimeMs;
       return;
     }
-    await this.db.transaction(async (tx) => {
+    await this.db!.transaction(async (tx) => {
       for (let i = 0; i < complete.length; i += 500)
         await tx.query(
           `INSERT INTO vectors SELECT x->>'id',(x->>'v')::vector FROM jsonb_array_elements($1::jsonb) x ON CONFLICT(id) DO UPDATE SET embedding=EXCLUDED.embedding`,
@@ -129,7 +135,7 @@ export class Discovery {
   }
   async search(raw: unknown) {
     const input = searchInput.parse(raw);
-    await this.ready;
+    await this.ensureReady();
     if (!this.refreshing) {
       this.refreshing = this.refresh().finally(() => {
         this.refreshing = undefined;
@@ -215,21 +221,21 @@ export class Discovery {
             : [];
       else if (!q)
         rows = (
-          await this.db.query<{ id: string; score: number }>(
+          await this.db!.query<{ id: string; score: number }>(
             `SELECT id,0::float AS score FROM products WHERE ${where} ORDER BY label,id`,
             params.slice(0, 4),
           )
         ).rows;
       else
         rows = (
-          await this.db.query<{ id: string; score: number }>(
+          await this.db!.query<{ id: string; score: number }>(
             `SELECT id, ts_rank_cd(body,to_tsquery('simple',$6))*8+similarity(label,$5)*2+CASE WHEN label LIKE '%'||$5||'%' THEN 4 ELSE 0 END AS score FROM products WHERE ${where} AND (body @@ to_tsquery('simple',$6) OR word_similarity($5,label)>0.55) ORDER BY score DESC,id`,
             params,
           )
         ).rows;
       if (queryVector && q) {
         const semantic = (
-          await this.db.query<{ id: string; distance: number }>(
+          await this.db!.query<{ id: string; distance: number }>(
             `SELECT id,embedding <=> $5::vector AS distance FROM products JOIN vectors USING(id) WHERE ${where} ORDER BY distance LIMIT 150`,
             [...params.slice(0, 4), JSON.stringify(queryVector)],
           )
@@ -348,8 +354,48 @@ export class Discovery {
   }
   // Keystroke path: no database initialization, vector reads, or provider calls.
   suggest(raw: unknown) {
-    const input = searchInput.parse(raw),
-      intent = basicIntent(input.query);
+    const input = searchInput.parse(raw);
+    return this.quickSearch(input, basicIntent(input.query), "instant");
+  }
+  // Railway uses this bounded path so a full in-memory SQL index cannot starve
+  // the co-hosted storefront. AI may reinterpret the query; products remain
+  // grounded in the loaded catalogue and deterministic filters.
+  async searchLightweight(raw: unknown) {
+    const input = searchInput.parse(raw);
+    let intent = basicIntent(input.query);
+    let mode = "instant";
+    if (
+      input.smart &&
+      input.query &&
+      !/^\d{6,}$/.test(input.query) &&
+      !this.catalog.products.some(
+        (p) =>
+          p.id === input.query ||
+          p.gtin === input.query ||
+          p.packs.some((x) => x.gtin === input.query),
+      )
+    ) {
+      try {
+        const interpreted = await interpret(input.query);
+        intent = {
+          ...interpreted,
+          claims: [...new Set([...intent.claims, ...interpreted.claims])],
+          unresolved: [
+            ...new Set([...intent.unresolved, ...interpreted.unresolved]),
+          ],
+        };
+        mode = "ai";
+      } catch {
+        // Deterministic intent remains available when the model is unavailable.
+      }
+    }
+    return this.quickSearch(input, intent, mode);
+  }
+  private quickSearch(
+    input: SearchRequest,
+    intent: Intent,
+    mode: string,
+  ) {
     const required = [...new Set([...input.claims, ...intent.claims])];
     const tokens = intent.terms
       .flatMap((t) => normalize(t).split(" "))
@@ -387,7 +433,7 @@ export class Discovery {
       }
       rows.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
     }
-    return this.finish(input, intent, rows, "instant", !!exact);
+    return this.finish(input, intent, rows, mode, !!exact);
   }
   compare(ids: string[]) {
     if (ids.length < 1 || ids.length > 3)

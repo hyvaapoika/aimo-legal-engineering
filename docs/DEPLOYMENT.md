@@ -45,9 +45,11 @@ monitoring, and a privacy review before connecting real customer workspaces.
 `.railway/railway.ts` defines one service (`junction-repo`) and a 500 MB
 persistent volume mounted at `/data`. The existing PGlite business database and
 signing keys persist there. Keep one app replica: the embedded store and demo
-ledger are single-instance. Discovery's search index rebuilds in memory from the
-bundled catalogue at startup. The full local embedding cache is optional and is
-not required for catalogue keyword search or Gemini intent interpretation.
+ledger are single-instance. The public judge sandbox uses the bounded
+full-catalogue search path with advisory Gemini intent; it does not start the
+optional PGlite full-text/vector index. That index remains lazy for local
+environments. The optional embedding cache is not required for the public
+catalogue search.
 
 The service receives HTTP on port 4000. Hono serves the gateway APIs and forwards
 page requests to the private Next.js listener on 3100. HTTPS terminates at

@@ -27,6 +27,7 @@ export default defineRailway(() => {
       STATE_DIR: "/data",
       GATEWAY_URL: "http://127.0.0.1:4000",
       PROXY_WEB: "true",
+      DISCOVERY_LIGHTWEIGHT: "true",
       PUBLIC_DEMO_MODE: "true",
       MOCK_VALIO: "false",
       DEMO_MODE: "false",
