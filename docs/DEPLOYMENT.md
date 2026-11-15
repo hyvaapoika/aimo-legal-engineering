@@ -2,12 +2,15 @@
 
 ## Current status
 
-The deployment profile is ready and pushed to `main`, but no Railway project or
-public URL exists yet. On 15 November 2026, Railway rejected project creation
-because the account's Free plan had reached its resource-provision limit. The
-account owner must complete the approved Hobby plan setup in Railway before the
-steps below can continue. A browser sign-in was also required; no payment method
-or plan change was submitted from this session.
+The public judge sandbox is live at
+https://junction-repo-production.up.railway.app in Railway project
+`truthful-cat`, service `junction-repo`. The deployment uses a 500 MB persistent
+volume because that is the current plan's volume limit. The full catalogue is
+bundled with the app, so the volume holds the business database and ledger.
+Health, catalogue count, public demo sign-in, storefront context, and a read-only
+Valio challenge offer lookup were verified on 15 November 2026. The complete
+remote purchasing journey was not written to the shared public ledger during
+verification.
 
 This Railway profile hosts the complete supplied 17,546-record catalogue and the
 webshop, purchasing agent, MCP gateway, approval workspace, and simulated order
@@ -39,7 +42,7 @@ monitoring, and a privacy review before connecting real customer workspaces.
 
 ## Railway resources
 
-`.railway/railway.ts` defines one `aimo-agent-gateway` service and a 1 GiB
+`.railway/railway.ts` defines one service (`junction-repo`) and a 500 MB
 persistent volume mounted at `/data`. The existing PGlite business database and
 signing keys persist there. Keep one app replica: the embedded store and demo
 ledger are single-instance. Discovery's search index rebuilds in memory from the
@@ -54,15 +57,15 @@ checks and agent discovery.
 ## Deploy/update
 
 1. Push the reviewed source to the configured GitHub branch (`main`).
-2. In Railway, create/link a project for `junction-repo`, then apply
-   `.railway/railway.ts` with `railway config plan` and `railway config apply`.
+2. Link Railway project `truthful-cat`, service `junction-repo`, then preview
+   `.railway/railway.ts` with `railway config plan` before applying updates.
 3. Set `ADMIN_TOKEN` and `AGENT_TOKEN` to different random values of at least 32
    characters. Set `VALIO_API_KEY` from the Junction platform and optionally
    `GEMINI_API_KEY` for structured request interpretation. Set secrets through
    Railway variables or `railway variable set NAME --stdin`; never print secret
    variable output.
-4. Generate the service domain on port 4000 and deploy. The required runtime
-   variables and safety flags are declared in the IaC profile.
+4. The public service domain is already generated on port 4000. Railway builds
+   deploy automatically from the configured GitHub branch.
 5. Verify `/health`, the catalogue count, the storefront search, the
    `/operations` public-sandbox sign-in, a Valio challenge offer lookup, one
    proposal, a human review, and a simulated order. Check that an unknown Valio

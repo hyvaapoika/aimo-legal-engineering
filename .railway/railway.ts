@@ -10,10 +10,11 @@ import {
 export default defineRailway(() => {
   const state = volume("aimo-state", {
     region: "europe-west4",
-    sizeMB: 1024,
+    sizeMB: 500,
   });
 
-  const app = service("aimo-agent-gateway", {
+  // Reuse the already-provisioned monorepo service instead of replacing it.
+  const app = service("junction-repo", {
     source: github("safiulalam99/junction-repo", { branch: "main" }),
     replicas: 1,
     healthcheck: "/health",

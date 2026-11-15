@@ -104,7 +104,7 @@ Scope: local working hackathon application. Hosted provider checks and public de
 - Claude and Gemini adapters are implemented/typechecked; paid calls were not made without keys.
 - Telephone/SMS integration remains unconnected. Browser voice implementation and verification are tracked below.
 - Partial auto-placement, vector search, A2A task execution, production SSO, and certified Peppol validation are outside this delivered local demo. See `docs/ASSUMPTIONS.md` for precise behavior and rationale.
-- No public deployment, remote push, real supplier order, payment, email, or SMS was made. The authorized Twilio reachability test is recorded above.
+- No real supplier order, payment, email, or SMS was made. The public sandbox deployment is recorded below.
 
 ## Browser voice approval — 14 November 2026
 
@@ -120,8 +120,9 @@ Scope: local working hackathon application. Hosted provider checks and public de
 - Removed mandatory recitation. Common natural requests and confirmations are accepted; model intent can prepare a confirmation for other wording but cannot commit a decision. A read-only status tool synchronizes the agent with the actual gateway result.
 - Rewrote the prompt for brief, conversational answers, interruptions, and normal confirmation questions. Selected Eleven v4 Turbo expressive voice, normal turn-taking, and a shorter response budget. The real provider readback confirms `eleven_v4_turbo`, expressive mode enabled, queueing disabled, and both advisory/read-only client tools attached. Final `pnpm check` passed all **92 tests** and the isolated demo; `pnpm build` passed. A second live test used ordinary speech (“I don’t think I wanna go with it… not approve it”), the agent asked a cancellation question, and “Yeah, yeah, cancel it” recorded a voice rejection with no order. The compound wording “Yeah, go ahead. I’m not approving this” initially repeated the question and is now covered by a passing regression test. Voice timbre remains a user preference rather than an automated quality assertion. Added the provider end-call tool for spoken hang-up requests; that last behavior is provisioned but not yet exercised live.
 
-## Railway public deployment attempt — 15 November 2026
+## Railway public judge sandbox — 15 November 2026
 
-- The Railway IaC profile, public sandbox boundary, one-service reverse proxy, and persistent-volume setup are committed to `main` (`0b8aee8`) and pushed to GitHub. Local checks and the production-style rehearsal passed before deployment.
-- Railway CLI is authenticated, but the account's Free plan hit its resource-provision limit before a project could be created. Railway billing opened without a browser sign-in; no plan change, payment method, project, or live public deployment was created. The approved Hobby upgrade still requires the account owner to complete Railway/GitHub browser sign-in and any billing action.
-- Until Railway provisioning is available, the public URL, remote build, hosted persistent volume, and deployed health/catalogue/Valio/order rehearsal remain unverified. The deployment guide documents the remaining steps. Orders stay simulated; no supplier order was sent.
+- Deployed `main` to Railway project `truthful-cat`, service `junction-repo`, at https://junction-repo-production.up.railway.app. The hosted container build succeeded; its 500 MB persistent volume is ready at `/data`. The current Railway plan caps volume size at 500 MB, which is sufficient for the business database and ledger because the full catalogue and search index are bundled/rebuilt by the app.
+- `pnpm check` passed all 173 tests, the isolated purchasing demo, and ledger verification. `pnpm build` passed. Remote `/health` returned HTTP 200, `mode=valio`, and `catalogCount=17546`; `/` returned HTTP 200.
+- Public demo login, admin snapshot, and storefront customer context returned HTTP 200. A read-only offer lookup for product 464201 returned HTTP 200 with `source=valio`. Railway credentials are stored as service variables; none are in Git.
+- No proposal or order was created on the public service during verification. The public workspace and its ledger are shared; order placement remains simulated, with no supplier order adapter.

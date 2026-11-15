@@ -64,6 +64,7 @@
     "@types/pg": "^8.15.0",
     "concurrently": "^9.2.0",
     "prettier": "^3.6.0",
+    "railway": "^3.17.0",
     "tsx": "^4.20.0",
     "turbo": "^2.6.0",
     "typescript": "^5.9.0",
