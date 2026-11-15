@@ -1,5 +1,14 @@
 # Public judge sandbox deployment
 
+## Current status
+
+The deployment profile is ready and pushed to `main`, but no Railway project or
+public URL exists yet. On 15 November 2026, Railway rejected project creation
+because the account's Free plan had reached its resource-provision limit. The
+account owner must complete the approved Hobby plan setup in Railway before the
+steps below can continue. A browser sign-in was also required; no payment method
+or plan change was submitted from this session.
+
 This Railway profile hosts the complete supplied 17,546-record catalogue and the
 webshop, purchasing agent, MCP gateway, approval workspace, and simulated order
 ledger in one service. With `MOCK_VALIO=false`, the gateway uses Valio's hosted
