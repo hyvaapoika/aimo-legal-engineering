@@ -52,7 +52,7 @@ export async function embed(
         dtype: "q8",
         session_options: { intraOpNumThreads: 2, interOpNumThreads: 1 },
       });
-      result.tokenizer.model_max_length = 128;
+      result.tokenizer.config.model_max_length = 128;
       return result;
     },
   );
