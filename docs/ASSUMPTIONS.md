@@ -1,5 +1,9 @@
 # Implementation decisions and limits
 
+## Kitchen rule for supplier egg declarations
+
+This optional mandate applies to every product the buyer orders. A trusted operator loads versioned, product-specific supplier statements. The replay uses fictional data and simulated orders. A change to the evidence or the mandate ends a pending approval. [Rule scope, legal source and replay](food-evidence.md)
+
 ## Current kitchen purchasing agent
 
 Delivery is entered in the prompt and resolved by a bounded deterministic parser (ISO, Finnish numeric date, English weekday or relative day), then shown in the review. No date retains the existing default/prior date. Unsupported or conflicting recognized expressions need clarification. Attachment-only delivery dates and conversational weekly order-history lookup are not implemented.

@@ -95,6 +95,32 @@ export const offerPayloadSchema = z.object({
 });
 export const offerSchema = offerPayloadSchema.extend({ signature: z.string() });
 export type Offer = z.infer<typeof offerSchema>;
+export const eggEvidenceRule = "KITCHEN-EGG-01/v1" as const;
+export const foodInformationLaw =
+  "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX%3A02011R1169-20250401";
+export const supplierDeclarationSchema = z.strictObject({
+  productId: id,
+  revision: z.number().int().positive(),
+  documentId: id,
+  locator: z.string().trim().min(1).max(240),
+  issuedAt: instant,
+  egg: z.enum(["declared_free", "contains", "may_contain", "not_stated"]),
+});
+export type SupplierDeclaration = z.infer<typeof supplierDeclarationSchema>;
+const eggEvidenceLineSchema = z.object({
+  productId: id,
+  declaration: supplierDeclarationSchema.nullable(),
+  catalogueFlagsEgg: z.boolean(),
+  outcome: z.enum(["supported", "unknown", "contradicted"]),
+});
+export type EggEvidenceLine = z.infer<typeof eggEvidenceLineSchema>;
+const foodEvidenceSchema = z.object({
+  ruleId: z.literal(eggEvidenceRule),
+  origin: z.literal("kitchen_policy"),
+  informationLaw: z.literal(foodInformationLaw),
+  mandateVersion: z.number().int().positive(),
+  lines: z.array(eggEvidenceLineSchema),
+});
 export const mandateSchema = z
   .object({
     version: z.number().int().positive(),
@@ -107,6 +133,7 @@ export const mandateSchema = z
     deliverySites: z.array(id).min(1),
     substitutionPolicy: z.enum(["explicit", "category", "none"]),
     allergenProfile: z.enum(["strict", "standard"]),
+    requireEggDeclaration: z.boolean().optional(),
     requiredClaims: z.array(id),
     allergenFree: z.array(id),
     acceptCatalogPrice: z.boolean(),
@@ -187,6 +214,7 @@ export const verdictSchema = z.object({
     z.object({ productId: id, result: z.enum(["AUTO", "HOLD", "REFUSE"]) }),
   ),
   evaluatedAt: instant,
+  foodEvidence: foodEvidenceSchema.optional(),
 });
 export type Verdict = z.infer<typeof verdictSchema>;
 export const proposalSchema = proposalInputSchema.extend({
@@ -208,6 +236,14 @@ export const proposalSchema = proposalInputSchema.extend({
   orderId: id.optional(),
   revision: z.number().int().positive(),
   parentId: id.optional(),
+  invalidatedReview: z
+    .object({
+      previousVerdictId: id,
+      previousEvidence: foodEvidenceSchema.nullable(),
+      previousDigest: z.string().nullable(),
+      currentDigest: z.string().nullable(),
+    })
+    .optional(),
 });
 export type Proposal = z.infer<typeof proposalSchema>;
 export const approvalSchema = z.object({
@@ -217,6 +253,7 @@ export const approvalSchema = z.object({
   status: z.enum(["pending", "approved", "rejected", "amended", "expired"]),
   challengeToken: z.string(),
   lineHash: z.string(),
+  foodEvidenceDigest: z.string().optional(),
   createdAt: instant,
   expiresAt: instant,
   nextAttemptAt: instant,
@@ -310,6 +347,7 @@ export const offersInputSchema = z
   .strict();
 export const domainSchemas = {
   Product: productSchema,
+  SupplierDeclaration: supplierDeclarationSchema,
   Requirement: requirementSchema,
   Offer: offerSchema,
   Proposal: proposalSchema,

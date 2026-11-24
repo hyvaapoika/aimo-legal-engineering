@@ -1,5 +1,11 @@
 # Aimo Agent Gateway
 
+## Legal engineering portfolio
+
+Team fatbois built the original purchasing gateway at Junction. This fork adds an optional supplier-evidence check by `@hyvaapoika`. It shows what happens when a kitchen manager is ready to approve a €120 pasta order and the supplier withdraws its egg declaration. Run `pnpm demo:food-evidence` to replay it. [Rule and legal source](docs/food-evidence.md) · [Regression tests](tests/food-evidence.test.ts) · [Original team gateway](https://github.com/safiulalam99/junction-repo/tree/c09f98678980bf7004bd9c2e2f89ef5f6a5402f9)
+
+## Junction gateway
+
 A working Junction 2026 purchasing gateway over the supplied Valio Aimo catalog. External agents search products, obtain signed fixed-price offers, and submit proposals. Deterministic rules produce **AUTO**, **HOLD**, or **REFUSE**. A registered human can approve policy exceptions through the webshop; impossible quantities, blocked products, missing claims, and invalid offers cannot be waved through.
 
 **Local demo is implemented and tested. Order placement is simulated. Valio's hosted challenge APIs also use synthetic data and require your API key. Voice and SMS are disabled; no messages or calls are sent.** See [challenge fit](docs/CHALLENGE-FIT.md) for the judging criteria and [implementation decisions](docs/ASSUMPTIONS.md) for the exact departures from the original plan.

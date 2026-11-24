@@ -195,6 +195,25 @@ export function AgentDrawer({
               </select>
             </label>
             <label>
+              Supplier egg declaration
+              <select
+                value={mandate.requireEggDeclaration ? "required" : "optional"}
+                onChange={(e) =>
+                  setMandate({
+                    ...mandate,
+                    requireEggDeclaration: e.target.value === "required",
+                  })
+                }
+              >
+                <option value="optional">
+                  Use the standard catalogue checks
+                </option>
+                <option value="required">
+                  Require an egg-free declaration for every product
+                </option>
+              </select>
+            </label>
+            <label>
               Required claims (comma separated)
               <input
                 value={mandate.requiredClaims.join(",")}

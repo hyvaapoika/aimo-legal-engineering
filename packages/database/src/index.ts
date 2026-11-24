@@ -14,6 +14,7 @@ export const tables = [
   "jobs",
   "kitchen_profiles",
   "purchase_plans",
+  "supplier_declarations",
 ] as const;
 export type Table = (typeof tables)[number];
 export interface Sql {

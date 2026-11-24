@@ -65,6 +65,9 @@
         "standard"
       ]
     },
+    "requireEggDeclaration": {
+      "type": "boolean"
+    },
     "requiredClaims": {
       "type": "array",
       "items": {

@@ -1,4 +1,5 @@
 "use client";
+import { FoodEvidence } from "../components/food-evidence";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
@@ -1574,6 +1575,7 @@ export default function Store() {
                         .map((r) => r.message)
                         .join(" ")}
                     </p>
+                    <FoodEvidence proposal={proposal} />
                     <Link href="/operations">
                       Open human approval workspace <ArrowRight size={15} />
                     </Link>
