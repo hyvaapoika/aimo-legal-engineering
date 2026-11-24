@@ -1,5 +1,9 @@
 # Implementation tracker
 
+## Personal fork, 24 November 2026
+
+The fork adds versioned supplier declarations to the team's purchase and approval workflow. The local replay shows an approved budget exception and a refusal after the supplier withdraws its statement. REST and MCP expose both versions of the evidence. The demonstration uses simulated orders. [Rule and regression tests](docs/food-evidence.md)
+
 - [x] Inspect supplied plan, OpenAPI contract, and all four datasets.
 - [x] Scaffold TypeScript workspace; preserve original source data and API contract.
 - [x] Catalog ingestion, safe unit conversion, and live/mock Valio client.

@@ -7,7 +7,11 @@ import type {
   ProposalInput,
   Verdict,
   Product,
+  EggEvidenceLine,
+  SupplierDeclaration,
 } from "@aimo/schema";
+import { eggEvidenceRule, foodInformationLaw } from "@aimo/schema";
+import { checkEggDeclaration } from "./egg-evidence.js";
 import { feasibleRules, lineCents } from "@aimo/feasibility";
 
 export type EvaluationContext = {
@@ -20,11 +24,13 @@ export type EvaluationContext = {
   products: Map<string, Product>;
   now: Date;
   requireHumanApproval?: boolean;
+  supplierDeclarations?: ReadonlyMap<string, SupplierDeclaration>;
 };
 export function evaluate(ctx: EvaluationContext): Verdict {
   const { input, agent, now, history } = ctx;
   const m = agent.mandate;
   const rules: FiredRule[] = [];
+  const evidenceLines: EggEvidenceLine[] = [];
   const add = (
     id: string,
     severity: "HOLD" | "REFUSE",
@@ -86,6 +92,28 @@ export function evaluate(ctx: EvaluationContext): Verdict {
       continue;
     }
     const p = offer.product;
+    if (m.requireEggDeclaration) {
+      const evidence = checkEggDeclaration(
+        p,
+        ctx.supplierDeclarations?.get(p.id),
+        ctx.products.get(p.id),
+      );
+      evidenceLines.push(evidence);
+      if (evidence.outcome !== "supported")
+        add(
+          eggEvidenceRule,
+          "REFUSE",
+          evidence.outcome === "unknown"
+            ? "EGG_EVIDENCE_MISSING"
+            : "EGG_EVIDENCE_CONFLICT",
+          evidence.outcome === "unknown"
+            ? "The kitchen requires an explicit supplier declaration covering egg for this product."
+            : "The supplier or catalogue flags egg. This product fails the kitchen’s purchasing rule.",
+          evidence,
+          "affirmative product-specific egg declaration",
+          p.id,
+        );
+    }
     if (
       !ctx.validSignatures.has(offer.id) ||
       Date.parse(offer.validUntil) <= now.getTime()
@@ -275,6 +303,17 @@ export function evaluate(ctx: EvaluationContext): Verdict {
     proposalId: ctx.proposalId,
     result,
     firedRules: rules,
+    ...(m.requireEggDeclaration
+      ? {
+          foodEvidence: {
+            ruleId: eggEvidenceRule,
+            origin: "kitchen_policy",
+            informationLaw: foodInformationLaw,
+            mandateVersion: m.version,
+            lines: evidenceLines,
+          },
+        }
+      : {}),
     perLine: input.lines.map((line) => {
       const applicable = rules.filter(
         (r) => !r.productId || r.productId === line.productId,

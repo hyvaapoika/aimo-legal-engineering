@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowRight, Check, SlidersHorizontal } from "lucide-react";
 import type { Approval, Proposal, Product } from "@aimo/schema";
 import { api, money, count, day, time, short } from "./shared";
+import { FoodEvidence } from "./food-evidence";
 export function ApprovalCard({
   proposal,
   approval,
@@ -143,6 +144,7 @@ export function ApprovalCard({
           )}
         </div>
       </div>
+      <FoodEvidence proposal={proposal} />
       <div className="approval-actions">
         <div>
           {editing ? (

@@ -33,6 +33,9 @@
     "lineHash": {
       "type": "string"
     },
+    "foodEvidenceDigest": {
+      "type": "string"
+    },
     "createdAt": {
       "type": "string",
       "format": "date-time",

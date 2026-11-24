@@ -34,10 +34,30 @@ import {
   type Proposal,
   type ProposalInput,
   type SearchInput,
+  type SupplierDeclaration,
+  type Verdict,
 } from "@aimo/schema";
 import { lineCents, nonOverridableHolds, toInstant } from "@aimo/feasibility";
 import { evaluate } from "@aimo/rules";
 import type { Configuration } from "./config.js";
+import { currentDeclaration } from "./supplier-declarations.js";
+
+function foodEvidenceDigest(proposal: Proposal, verdict: Verdict) {
+  if (!verdict.foodEvidence) return undefined;
+  return sha256(
+    canonical({
+      proposalId: proposal.id,
+      revision: proposal.revision,
+      agentId: proposal.agentId,
+      customerId: proposal.customerId,
+      requestedDate: proposal.requestedDate,
+      deliverySite: proposal.deliverySite,
+      requirementRef: proposal.requirementRef,
+      lines: proposal.lines,
+      foodEvidence: verdict.foodEvidence,
+    }),
+  );
+}
 
 export const DEMO_AGENT = "hotel-haven-buyer";
 export const DEMO_CUSTOMER = "hotel-haven";
@@ -332,6 +352,7 @@ export class GatewayService {
   ) {
     const offers = new Map<string, Offer>();
     const validSignatures = new Set<string>();
+    const supplierDeclarations = new Map<string, SupplierDeclaration>();
     for (const line of input.lines) {
       const offer = await repo.get<Offer>("offers", line.offerId);
       if (offer) {
@@ -339,6 +360,15 @@ export class GatewayService {
         const { signature, ...payload } = offer;
         if (await this.signer.verify(payload, signature))
           validSignatures.add(offer.id);
+        if (
+          agent.mandate.requireEggDeclaration &&
+          offer.customerId === agent.customerId &&
+          offer.productId === line.productId
+        ) {
+          const declaration = await currentDeclaration(repo, line.productId);
+          if (declaration)
+            supplierDeclarations.set(line.productId, declaration);
+        }
       }
     }
     const history = await repo.all<Order>("orders", agent.customerId);
@@ -349,6 +379,7 @@ export class GatewayService {
         agent,
         offers,
         validSignatures,
+        supplierDeclarations,
         history,
         products: this.catalog.byId,
         now: this.now(),
@@ -483,7 +514,16 @@ export class GatewayService {
         customerId: agent.customerId,
         actor: actor("aimo", "aimo"),
         refs: { proposalId: id },
-        payload: { result: verdict.result, firedRules: verdict.firedRules },
+        payload: {
+          result: verdict.result,
+          firedRules: verdict.firedRules,
+          ...(verdict.foodEvidence
+            ? {
+                foodEvidence: verdict.foodEvidence,
+                foodEvidenceDigest: foodEvidenceDigest(proposal, verdict),
+              }
+            : {}),
+        },
       },
       now,
     );
@@ -496,6 +536,7 @@ export class GatewayService {
         status: "pending",
         challengeToken: token(),
         lineHash: sha256(canonical(proposal.lines)),
+        foodEvidenceDigest: foodEvidenceDigest(proposal, verdict),
         createdAt: now.toISOString(),
         expiresAt: new Date(now.getTime() + 4 * 3_600_000).toISOString(),
         nextAttemptAt: now.toISOString(),
@@ -594,7 +635,7 @@ export class GatewayService {
     customerId = DEMO_CUSTOMER,
     voiceEvidence?: { sessionId: string; transcriptHash: string },
   ) {
-    return this.db.transaction(async (repo) => {
+    const result = await this.db.transaction(async (repo) => {
       const approval = await repo.get<Approval>("approvals", approvalId);
       if (!approval || approval.customerId !== customerId)
         throw new DomainError("NOT_FOUND", "Approval not found.", 404);
@@ -649,6 +690,65 @@ export class GatewayService {
         );
         return { proposal, approval };
       }
+      // Both affirmative paths can place an order. Check the current supplier
+      // register and mandate under the same transaction lock as placement.
+      const checked =
+        decision.decision === "reject"
+          ? undefined
+          : await this.evaluateIn(
+              repo,
+              agent,
+              priorInput(proposal),
+              proposal.id,
+            );
+      if (checked) {
+        const currentDigest = foodEvidenceDigest(proposal, checked.verdict);
+        if (currentDigest !== approval.foodEvidenceDigest) {
+          const change = {
+            previousVerdictId: proposal.verdict.id,
+            previousEvidence: proposal.verdict.foodEvidence ?? null,
+            previousDigest: approval.foodEvidenceDigest ?? null,
+            currentDigest: currentDigest ?? null,
+          };
+          proposal.invalidatedReview = change;
+          proposal.verdict = checked.verdict;
+          proposal.status =
+            checked.verdict.result === "REFUSE" ? "refused" : "expired";
+          approval.status = "expired";
+          await repo.put("verdicts", { ...checked.verdict, customerId });
+          await repo.put("proposals", proposal);
+          await repo.put("approvals", approval);
+          await append(
+            repo,
+            {
+              type: "approval.invalidated",
+              customerId,
+              actor: actor("aimo", "aimo"),
+              refs: {
+                proposalId: proposal.id,
+                approvalId,
+                verdictId: checked.verdict.id,
+              },
+              payload: {
+                ...change,
+                currentEvidence: checked.verdict.foodEvidence ?? null,
+              },
+            },
+            this.now(),
+          );
+          // Return the conflict after commit so the buyer sees why the review ended.
+          return new DomainError(
+            "FOOD_EVIDENCE_REVIEW_CHANGED",
+            "The supplier declaration or purchasing mandate changed. Review the current evidence and submit a fresh proposal.",
+            409,
+            {
+              proposalId: proposal.id,
+              ...change,
+              currentEvidence: checked.verdict.foodEvidence ?? null,
+            },
+          );
+        }
+      }
       if (decision.decision === "approve_with_amount") {
         if (
           !decision.amendedLines?.length ||
@@ -678,12 +778,7 @@ export class GatewayService {
         proposal.status = "rejected";
         approval.status = "rejected";
       } else {
-        const { verdict, offers } = await this.evaluateIn(
-          repo,
-          agent,
-          priorInput(proposal),
-          proposal.id,
-        );
+        const { verdict, offers } = checked!;
         if (
           verdict.result === "REFUSE" ||
           verdict.firedRules.some((r) => nonOverridableHolds.has(r.code))
@@ -704,6 +799,7 @@ export class GatewayService {
         approval.signature = await this.signer.sign({
           approvalId,
           lineHash: approval.lineHash,
+          foodEvidenceDigest: approval.foodEvidenceDigest,
           ...(voiceEvidence ? { voiceEvidence } : {}),
           decision: decision.decision,
           approverId,
@@ -720,6 +816,7 @@ export class GatewayService {
             payload: {
               decision: decision.decision,
               lineHash: approval.lineHash,
+              foodEvidenceDigest: approval.foodEvidenceDigest,
               signature: approval.signature,
               channel: approval.channel,
               ...(voiceEvidence ? { voiceEvidence } : {}),
@@ -736,6 +833,7 @@ export class GatewayService {
       approval.signature = await this.signer.sign({
         approvalId,
         lineHash: approval.lineHash,
+        foodEvidenceDigest: approval.foodEvidenceDigest,
         ...(voiceEvidence ? { voiceEvidence } : {}),
         decision: decision.decision,
         amendedLines: decision.amendedLines,
@@ -754,6 +852,7 @@ export class GatewayService {
           payload: {
             decision: decision.decision,
             replacementProposalId: approval.replacementProposalId ?? null,
+            foodEvidenceDigest: approval.foodEvidenceDigest,
             channel: approval.channel,
             ...(voiceEvidence ? { voiceEvidence } : {}),
           },
@@ -762,6 +861,8 @@ export class GatewayService {
       );
       return { proposal, approval };
     });
+    if (result instanceof DomainError) throw result;
+    return result;
   }
   async snapshot(customerId = DEMO_CUSTOMER) {
     return this.db.transaction(async (repo) => ({
